@@ -1,0 +1,8 @@
+function main() {
+  const pi;
+  let x;
+  let z;
+
+  z = x * pi - x[pi];
+  return z;
+}
