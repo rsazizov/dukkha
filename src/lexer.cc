@@ -107,26 +107,11 @@ Token Lexer::next() {
     case ';': return make_token(TokenType::Semicolon);
     case '.': return make_token(TokenType::Dot);
     case ',': return make_token(TokenType::Comma);
-    case '-':
-      return make_token(match('=') ?
-          TokenType::MinusEq :
-          TokenType::Minus);
-    case '*':
-      return make_token(match('=') ?
-          TokenType::StarEq :
-          TokenType::Star);
-    case '+':
-      return make_token(match('=') ?
-          TokenType::PlusEq :
-          TokenType::Plus);
-    case '/':
-      return make_token(match('=') ?
-          TokenType::SlashEq :
-          TokenType::Slash);
-    case '=':
-      return make_token(match('=') ?
-          TokenType::EqEq :
-          TokenType::Eq);
+    case '-': return match_token('=', TokenType::MinusEq, TokenType::Minus);
+    case '*': return match_token('=', TokenType::StarEq, TokenType::Star);
+    case '+': return match_token('=', TokenType::PlusEq, TokenType::Plus);
+    case '/': return match_token('=', TokenType::SlashEq, TokenType::Slash);
+    case '=': return match_token('=', TokenType::EqEq, TokenType::Eq);
   }
 
   return make_token(TokenType::Error);
@@ -205,13 +190,17 @@ void Lexer::advance() {
   m_peek = *(m_cursor + 1);
 }
 
-bool Lexer::match(char ch) {
-  if (m_peek == ch) {
+Token Lexer::match_token(char peek, TokenType match, TokenType mismatch) {
+  Token token {};
+
+  if (m_peek == peek) {
+    token = make_token(match);
     advance();
-    return true;
+  } else {
+    token = make_token(mismatch);
   }
 
-  return false;
+  return token;
 }
 
 Token Lexer::make_token(TokenType type) {

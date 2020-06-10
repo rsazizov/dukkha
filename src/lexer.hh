@@ -57,7 +57,7 @@ private:
   Token identifer();
 
   void advance();
-  bool match(char ch);
+  Token match_token(char peek, TokenType match, TokenType mismatch);
 
   Token make_token(TokenType type);
   Token make_token(double number);

@@ -1,8 +1,1 @@
-function main() {
-  let x;
-  const pi;
-
-  let result = x * pi - x / pi;
-
-  return result;
-}
+result += x;
