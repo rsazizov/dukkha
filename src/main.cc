@@ -22,7 +22,8 @@ int main(int argc, char* argv[]) {
               << token.line << ":" << token.position << "\n";
 
     if (token.type == TokenType::Identifer ||
-        token.type == TokenType::StringLiteral) {
+        token.type == TokenType::StringLiteral ||
+        token.type == TokenType::Error) {
       std::cout << "  " << token.as_string << " "
                 << token.line << ":" << token.position << "\n";
     } else if (token.type == TokenType::NumberLiteral) {
@@ -32,8 +33,6 @@ int main(int argc, char* argv[]) {
 
     token = lexer.next();
   }
-
-  std::cout << "\n";
 
   return EX_OK;
 }

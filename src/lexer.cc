@@ -122,7 +122,7 @@ Token Lexer::next() {
     case '\'': return string();
   }
 
-  return make_token(TokenType::Error);
+  return make_token(TokenType::Error, "Unexpected symbol");
 }
 
 Token Lexer::keyword_or_identifer() {
@@ -192,6 +192,10 @@ Token Lexer::string() {
   std::stringstream ss("");
 
   while (*m_cursor != '\'') {
+    if (is_newline(*m_cursor) || *m_cursor == '\0') {
+      return make_token(TokenType::Error, "Unexpected end of line/file");
+    }
+
     ss << *m_cursor;
     advance();
   }
@@ -212,10 +216,6 @@ Token Lexer::number() {
 
       decimal = true;
       advance();
-    }
-
-    if (is_newline(m_peek) || m_peek == '\0') {
-      // TODO: ERROR
     }
 
     double digit = (m_peek) - '0';
