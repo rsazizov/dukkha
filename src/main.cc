@@ -21,8 +21,12 @@ int main(int argc, char* argv[]) {
     std::cout << token.type
               << token.line << ":" << token.position << "\n";
 
-    if (token.type == TokenType::Identifer) {
+    if (token.type == TokenType::Identifer ||
+        token.type == TokenType::StringLiteral) {
       std::cout << "  " << token.as_string << " "
+                << token.line << ":" << token.position << "\n";
+    } else if (token.type == TokenType::NumberLiteral) {
+      std::cout << "  " << token.as_number << " "
                 << token.line << ":" << token.position << "\n";
     }
 

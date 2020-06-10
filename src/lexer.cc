@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include <sstream>
+#include <cmath>
 
 char* strdup(const char* str) {
   char* dup = new char[std::strlen(str) + 1];
@@ -96,6 +98,10 @@ Token Lexer::next() {
     return keyword_or_identifer();
   }
 
+  if (std::isdigit(*m_cursor)) {
+    return number();
+  }
+
   switch (*m_cursor) {
     case '\0': return make_token(TokenType::EndOfFile);
     case '#': advance(true); return next();
@@ -113,6 +119,7 @@ Token Lexer::next() {
     case '+': return match_token('=', TokenType::PlusEq, TokenType::Plus);
     case '/': return match_token('=', TokenType::SlashEq, TokenType::Slash);
     case '=': return match_token('=', TokenType::EqEq, TokenType::Eq);
+    case '\'': return string();
   }
 
   return make_token(TokenType::Error);
@@ -127,6 +134,7 @@ Token Lexer::keyword_or_identifer() {
       }
       break;
 
+    // TODO: Use contexpr for string length?
     case 'l': return keyword(1, 2, "et", TokenType::Let);
     case 'i': return keyword(1, 1, "f", TokenType::If);
     case 'c': return keyword(1, 4, "onst", TokenType::Const);
@@ -172,6 +180,53 @@ Token Lexer::identifer() {
 
   m_position += size - 1;
 
+  return token;
+}
+
+
+Token Lexer::string() {
+  // Skip "'"
+  advance();
+
+  // TODO: Is stringstream the most efficient option?
+  std::stringstream ss("");
+
+  while (*m_cursor != '\'') {
+    ss << *m_cursor;
+    advance();
+  }
+
+  return make_token(TokenType::StringLiteral, ss.str().c_str());
+}
+
+Token Lexer::number() {
+  double value = 0;
+  bool decimal = false;
+  int n_decimals = 0;
+
+  Token token = make_token(0.0);
+
+  while (std::isdigit(m_peek) || m_peek == '.') {
+    if (m_peek == '.') {
+      if (decimal) break;
+
+      decimal = true;
+      advance();
+    }
+
+    if (is_newline(m_peek) || m_peek == '\0') {
+      // TODO: ERROR
+    }
+
+    double digit = (m_peek) - '0';
+    value = 10 * value + digit;
+
+    if (decimal) n_decimals++;
+
+    advance();
+  }
+
+  token.as_number = value * pow(10, -n_decimals);
   return token;
 }
 
@@ -225,6 +280,7 @@ Token Lexer::make_token(TokenType type) {
 Token Lexer::make_token(double number) {
   return (Token) {
     .type = TokenType::NumberLiteral,
+    .as_number = number,
     .line = m_line,
     .position = m_position
   };

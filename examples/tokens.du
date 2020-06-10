@@ -3,3 +3,6 @@
 result += x; # This is another comment
 result -= x;
 # This is the last line.
+
+let answer = 'the answer to the universe and stuff';
+let answer = 42.42.;

@@ -56,6 +56,9 @@ private:
       const char* str, TokenType type);
   Token identifer();
 
+  Token string();
+  Token number();
+
   void advance(bool skip_line=false);
 
   bool is_newline(char ch) const;
