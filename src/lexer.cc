@@ -66,10 +66,19 @@ Lexer::~Lexer() {
 }
 
 bool Lexer::from_file(const char* path) {
+  delete [] m_source;
+
+  m_position = 0;
+  m_line = 1;
+
+  m_peek = '\0';
+  m_cursor = nullptr;
+
   std::ifstream stream(path);
 
   if (!stream) {
     std::cerr << "Lexer::from_file(): File '" << path << "' does not exist!\n";
+    stream.close();
     return false;
   }
 
@@ -82,9 +91,6 @@ bool Lexer::from_file(const char* path) {
 
   stream.read(m_source, size);
   stream.close();
-
-  m_position = 0;
-  m_line = 1;
 
   return true;
 }

@@ -48,6 +48,7 @@ public:
   ~Lexer();
 
   bool from_file(const char* path);
+
   Token next();
 
 private:
