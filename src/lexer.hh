@@ -42,8 +42,6 @@ struct Token {
   std::size_t position { 0 };
 };
 
-std::ostream& operator << (std::ostream& os, const Token& token);
-
 class Lexer {
 public:
   Lexer();
@@ -58,13 +56,16 @@ private:
       const char* str, TokenType type);
   Token identifer();
 
+  void advance();
+  bool match(char ch);
+
   Token make_token(TokenType type);
   Token make_token(double number);
   Token make_token(TokenType type, const char* string);
 
   char* m_source { nullptr };
-  char* ch { nullptr };
-  char* peek { nullptr };
+  char* m_cursor { nullptr };
+  char m_peek { '\0' };
 
   size_t m_line { 0 };
   size_t m_position { 0 };

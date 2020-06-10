@@ -18,10 +18,12 @@ int main(int argc, char* argv[]) {
 
   Token token = lexer.next();
   while (token.type != TokenType::EndOfFile) {
-    std::cout << token.type << "\n";
+    std::cout << token.type
+              << token.line << ":" << token.position << "\n";
 
     if (token.type == TokenType::Identifer) {
-      std::cout << "  " << token.as_string << "\n";
+      std::cout << "  " << token.as_string << " "
+                << token.line << ":" << token.position << "\n";
     }
 
     token = lexer.next();

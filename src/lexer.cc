@@ -78,29 +78,25 @@ bool Lexer::from_file(const char* path) {
   m_source = new char[size + 1];
   m_source[size] = '\0';
 
-  ch = m_source - 1;
-  peek = ch + 1;
-
   stream.read(m_source, size);
   stream.close();
+
+  m_position = 0;
+  m_line = 1;
 
   return true;
 }
 
 Token Lexer::next() {
-  ch++;
+  do {
+    advance();
+  } while (std::isspace(*m_cursor));
 
-  while (std::isspace(*ch)) {
-    ch++;
-  }
-
-  peek = ch + 1;
-
-  if (std::isalpha(*ch)) {
+  if (std::isalpha(*m_cursor)) {
     return keyword_or_identifer();
   }
 
-  switch (*ch) {
+  switch (*m_cursor) {
     case '\0': return make_token(TokenType::EndOfFile);
     case '{': return make_token(TokenType::LeftCurly);
     case '}': return make_token(TokenType::RightCurly);
@@ -112,23 +108,23 @@ Token Lexer::next() {
     case '.': return make_token(TokenType::Dot);
     case ',': return make_token(TokenType::Comma);
     case '-':
-      return make_token(*peek == '=' ?
+      return make_token(match('=') ?
           TokenType::MinusEq :
           TokenType::Minus);
     case '*':
-      return make_token(*peek == '=' ?
+      return make_token(match('=') ?
           TokenType::StarEq :
           TokenType::Star);
     case '+':
-      return make_token(*peek == '=' ?
+      return make_token(match('=') ?
           TokenType::PlusEq :
           TokenType::Plus);
     case '/':
-      return make_token(*peek == '=' ?
+      return make_token(match('=') ?
           TokenType::SlashEq :
           TokenType::Slash);
     case '=':
-      return make_token(*peek == '=' ?
+      return make_token(match('=') ?
           TokenType::EqEq :
           TokenType::Eq);
   }
@@ -137,11 +133,9 @@ Token Lexer::next() {
 }
 
 Token Lexer::keyword_or_identifer() {
-  char peek = *(ch + 1);
-
-  switch (*ch) {
+  switch (*m_cursor) {
     case 'f':
-      switch (peek) {
+      switch (m_peek) {
         case 'u': return keyword(2, 6, "nction", TokenType::Function);
         case 'o': return keyword(2, 1, "r", TokenType::For);
       }
@@ -161,31 +155,63 @@ Token Lexer::keyword_or_identifer() {
 Token Lexer::keyword(std::size_t start, std::size_t len,
     const char* str, TokenType type) {
 
-  bool match = !std::strncmp(str, ch + start,
+  bool match = !std::strncmp(str, m_cursor + start,
       std::strlen(str));
 
-  if (match && std::isspace(*(ch + start + len))) {
-    ch += start + len;
-    return make_token(type);
+  if (match && std::isspace(*(m_cursor + start + len))) {
+    Token token = make_token(type);
+    m_cursor += start + len;
+    m_position += start + len ;
+
+    return token;
   }
 
   return identifer();
 }
 
 Token Lexer::identifer() {
-  char name[32];
+  const std::size_t MAX_IDENTIFIER_LEN = 32;
+
+  char name[MAX_IDENTIFIER_LEN];
   size_t size = 0;
 
-  while (std::isalpha(*ch) || std::isdigit(*ch)) {
-    name[size++] = *ch;
-    ch++;
+  while (std::isalpha(*m_cursor) || std::isdigit(*m_cursor)) {
+    name[size++] = *m_cursor++;
   }
 
-  ch--;
-
+  m_cursor--;
   name[size] = '\0';
 
-  return make_token(TokenType::Identifer, name);
+  Token token = make_token(TokenType::Identifer, name);
+
+  m_position += size - 1;
+
+  return token;
+}
+
+void Lexer::advance() {
+  if (m_cursor == nullptr) {
+    m_cursor = m_source;
+  } else {
+    if (*m_cursor == '\n' || *m_cursor == '\r') {
+      m_line++;
+      m_position = 0;
+    }
+
+    m_cursor++;
+  }
+
+  m_position++;
+  m_peek = *(m_cursor + 1);
+}
+
+bool Lexer::match(char ch) {
+  if (m_peek == ch) {
+    advance();
+    return true;
+  }
+
+  return false;
 }
 
 Token Lexer::make_token(TokenType type) {
