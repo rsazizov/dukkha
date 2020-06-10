@@ -56,7 +56,10 @@ private:
       const char* str, TokenType type);
   Token identifer();
 
-  void advance();
+  void advance(bool skip_line=false);
+
+  bool is_newline(char ch) const;
+
   Token match_token(char peek, TokenType match, TokenType mismatch);
 
   Token make_token(TokenType type);

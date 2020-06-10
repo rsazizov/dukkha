@@ -1,1 +1,5 @@
-result += x;
+
+# This is a comment
+result += x; # This is another comment
+result -= x;
+# This is the last line.

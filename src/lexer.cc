@@ -98,6 +98,7 @@ Token Lexer::next() {
 
   switch (*m_cursor) {
     case '\0': return make_token(TokenType::EndOfFile);
+    case '#': advance(true); return next();
     case '{': return make_token(TokenType::LeftCurly);
     case '}': return make_token(TokenType::RightCurly);
     case '[': return make_token(TokenType::LeftSquare);
@@ -174,11 +175,17 @@ Token Lexer::identifer() {
   return token;
 }
 
-void Lexer::advance() {
+void Lexer::advance(bool skip_line) {
   if (m_cursor == nullptr) {
     m_cursor = m_source;
   } else {
-    if (*m_cursor == '\n' || *m_cursor == '\r') {
+    if (skip_line) {
+      while (!is_newline(m_peek) && m_peek != '\0') {
+        advance(false);
+      }
+    }
+
+    if (is_newline(*m_cursor)) {
       m_line++;
       m_position = 0;
     }
@@ -188,6 +195,10 @@ void Lexer::advance() {
 
   m_position++;
   m_peek = *(m_cursor + 1);
+}
+
+bool Lexer::is_newline(char ch) const {
+  return ch == '\n' || ch == '\r';
 }
 
 Token Lexer::match_token(char peek, TokenType match, TokenType mismatch) {
