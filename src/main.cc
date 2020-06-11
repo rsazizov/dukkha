@@ -1,38 +1,20 @@
 #include <iostream>
 #include <sysexits.h>
 
-#include "lexer.hh"
+#include "virtual_machine.hh"
 
 int main(int argc, char* argv[]) {
-  if (argc != 2) {
-    std::cerr << "Usage: dukkha <file.du>\n";
-    return EX_USAGE;
-  }
+  VirtualMachine vm;
 
-  const char* file_path = argv[1];
+  Bytecode code;
 
-  Lexer lexer;
-  if (!lexer.from_file(file_path)) {
-    return EX_NOINPUT;
-  }
+  std::uint8_t pi = code.push_const(3.14);
 
-  Token token = lexer.next();
-  while (token.type != TokenType::EndOfFile) {
-    std::cout << token.type
-              << token.line << ":" << token.position << "\n";
+  code.push_op(VirtualMachine::Constant16, 1);
+  code.push_op(pi, 1);
+  code.push_op(VirtualMachine::Negate, 0);
 
-    if (token.type == TokenType::Identifer ||
-        token.type == TokenType::StringLiteral ||
-        token.type == TokenType::Error) {
-      std::cout << "  " << token.as_string << " "
-                << token.line << ":" << token.position << "\n";
-    } else if (token.type == TokenType::NumberLiteral) {
-      std::cout << "  " << token.as_number << " "
-                << token.line << ":" << token.position << "\n";
-    }
-
-    token = lexer.next();
-  }
+  std::cout << vm.execute(&code) << "\n";
 
   return EX_OK;
 }
