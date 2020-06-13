@@ -28,7 +28,11 @@ public:
   enum Instruction : std::uint8_t {
     Return,
     Constant16,
-    Negate
+    Negate,
+    Add,
+    Subtract,
+    Multiply,
+    Divide
   };
 
   VirtualMachine();

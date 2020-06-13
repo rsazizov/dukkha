@@ -2,19 +2,18 @@
 #include <sysexits.h>
 
 #include "virtual_machine.hh"
+#include "compiler.hh"
 
 int main(int argc, char* argv[]) {
-  VirtualMachine vm;
-
   Bytecode code;
 
-  std::uint8_t pi = code.push_const(3.14);
+  Compiler compiler;
+  compiler.from_file("examples/expression.du", code);
 
-  code.push_op(VirtualMachine::Constant16, 1);
-  code.push_op(pi, 1);
-  code.push_op(VirtualMachine::Negate, 0);
+  VirtualMachine vm;
+  Value result = vm.execute(&code);
 
-  std::cout << vm.execute(&code) << "\n";
+  std::cout << "Result: " << result << "\n";
 
   return EX_OK;
 }

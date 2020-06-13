@@ -52,7 +52,7 @@ Value VirtualMachine::execute(const Bytecode* code) {
     return code->get_const(*m_ip++);
   };
 
-  while (true) {
+  while (m_ip != nullptr) {
     std::uint8_t op = *m_ip++;
 
     switch (op) {
@@ -64,6 +64,34 @@ Value VirtualMachine::execute(const Bytecode* code) {
         break;
       }
       case Negate: push(-pop()); break;
+      case Add: {
+        Value a = pop();
+        Value b = pop();
+        push(a + b);
+
+        break;
+      }
+      case Subtract: {
+        Value b = pop();
+        Value a = pop();
+        push(a - b);
+
+        break;
+      }
+      case Divide: {
+        Value b = pop();
+        Value a = pop();
+        push(a / b);
+
+        break;
+      }
+      case Multiply: {
+        Value b = pop();
+        Value a = pop();
+        push(a * b);
+
+        break;
+      }
     }
   }
 
