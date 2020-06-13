@@ -48,10 +48,13 @@ public:
   ~Lexer();
 
   bool from_file(const char* path);
+  bool from_source(const char* source);
 
   Token next();
 
 private:
+  void reset();
+
   Token keyword_or_identifer();
   Token keyword(std::size_t start, std::size_t len,
       const char* str, TokenType type);

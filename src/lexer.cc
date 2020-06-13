@@ -65,7 +65,7 @@ Lexer::~Lexer() {
   delete [] m_source;
 }
 
-bool Lexer::from_file(const char* path) {
+void Lexer::reset() {
   delete [] m_source;
 
   m_position = 0;
@@ -73,6 +73,10 @@ bool Lexer::from_file(const char* path) {
 
   m_peek = '\0';
   m_cursor = nullptr;
+}
+
+bool Lexer::from_file(const char* path) {
+  reset();
 
   std::ifstream stream(path);
 
@@ -92,6 +96,13 @@ bool Lexer::from_file(const char* path) {
   stream.read(m_source, size);
   stream.close();
 
+  return true;
+}
+
+bool Lexer::from_source(const char* source) {
+  reset();
+  m_source = strdup(source);
+  // TODO: ??
   return true;
 }
 
@@ -216,15 +227,15 @@ Token Lexer::number() {
 
   Token token = make_token(0.0);
 
-  while (std::isdigit(m_peek) || m_peek == '.') {
-    if (m_peek == '.') {
+  while (std::isdigit(*m_cursor) || *m_cursor == '.') {
+    if (*m_cursor == '.') {
       if (decimal) break;
 
       decimal = true;
       advance();
     }
 
-    double digit = (m_peek) - '0';
+    double digit = (*m_cursor) - '0';
     value = 10 * value + digit;
 
     if (decimal) n_decimals++;
