@@ -243,6 +243,8 @@ Token Lexer::number() {
     advance();
   }
 
+  m_peek = *(--m_cursor);
+
   token.as_number = value * pow(10, -n_decimals);
   return token;
 }
