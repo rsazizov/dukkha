@@ -65,6 +65,7 @@ void Bytecode::dump_text() {
       case VirtualMachine::Greater: std::cout << "gt\n"; break;
       case VirtualMachine::Less: std::cout << "lt\n"; break;
       case VirtualMachine::Exp: std::cout << "exp\n"; break;
+      case VirtualMachine::Print: std::cout << "cout\n"; break;
       case VirtualMachine::Return: std::cout << "ret\n"; break;
       case VirtualMachine::Constant16:
         std::cout << "push $" << (int) m_code[++i] << "\n";
@@ -239,7 +240,7 @@ Value VirtualMachine::execute(const Bytecode* code) {
 
     switch (op) {
       case Return:
-        return pop();
+        return true;
       case Constant16: {
         Value value = read_const();
         m_stack.push_back(value);
@@ -315,6 +316,11 @@ Value VirtualMachine::execute(const Bytecode* code) {
         Value b = pop();
         Value a = pop();
         push(logical_less(a, b));
+        break;
+      }
+      case Print: {
+        Value a = pop();
+        std::cout << a << "\n";
         break;
       }
       default: error() << "Unexpected op: " << (std::size_t) op << "\n";

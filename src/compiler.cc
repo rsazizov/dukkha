@@ -26,9 +26,10 @@ bool Compiler::from_file(const char* path, Bytecode& bytecode) {
 bool Compiler::compile() {
   m_had_error = false;
 
-  expression();
+  while (m_cursor.type != TokenType::EndOfFile) {
+    statement();
+  }
 
-  consume(TokenType::EndOfFile, "EOF expected");
   emit(VirtualMachine::Return);
 
   return !m_had_error;
@@ -36,6 +37,22 @@ bool Compiler::compile() {
 
 void Compiler::expression() {
   logical_or();
+}
+
+void Compiler::statement() {
+  if (m_cursor.type == TokenType::Print) {
+    advance();
+    print();
+  } else {
+    expression();
+    consume(TokenType::Semicolon, "';' expected");
+  }
+}
+
+void Compiler::print() {
+  expression();
+  emit(VirtualMachine::Print);
+  consume(TokenType::Semicolon, "';' expected");
 }
 
 void Compiler::logical_or() {

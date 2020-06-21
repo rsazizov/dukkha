@@ -49,7 +49,9 @@ public:
     Or,
     Equal,
     Greater,
-    Less
+    Less,
+
+    Print
   };
 
   VirtualMachine();

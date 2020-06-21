@@ -17,6 +17,9 @@ public:
 private:
   bool compile();
 
+  void statement();
+  void print();
+
   void expression();
 
   void logical_or();
