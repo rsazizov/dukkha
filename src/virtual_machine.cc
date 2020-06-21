@@ -1,8 +1,52 @@
 #include "virtual_machine.hh"
 
+#include <cstdlib>
 #include <iomanip>
 #include <cmath>
+#include <ios>
 #include <iostream>
+
+Value::Value(ValueType type) {
+  m_type = type;
+}
+
+Value::Value(double value) {
+  m_type = ValueType::Number;
+  m_number = value;
+}
+
+Value::Value(bool value) {
+  m_type = ValueType::Bool;
+  m_bool = value;
+}
+
+bool Value::is(ValueType type) const {
+  return m_type == type;
+}
+
+ValueType Value::getType() const {
+  return m_type;
+}
+
+double Value::as_number() const {
+  // TODO: assert?
+  return m_number;
+}
+
+bool Value::as_bool() const {
+  // TODO: assert?
+  return m_bool;
+}
+
+std::ostream& operator <<(std::ostream& os, const Value& value) {
+  switch (value.getType()) {
+    case ValueType::Number: os << value.as_number(); break;
+    case ValueType::Bool: os << std::boolalpha << value.as_bool(); break;
+    default: os << "Error"; break;
+  }
+
+  return os;
+}
 
 void Bytecode::clear() {
   m_code.clear();
@@ -74,14 +118,81 @@ Value VirtualMachine::pop() {
   return value;
 }
 
+Value VirtualMachine::neg(const Value& a) {
+  switch (a.getType()) {
+    case ValueType::Number:
+      return -a.as_number();
+      break;
+    default:
+      error() << "Unexpected operand type for negation";
+      return Value(ValueType::Error);
+  }
+}
+
+Value VirtualMachine::add(const Value& a, const Value& b) {
+  switch (a.getType()) {
+    case ValueType::Number:
+      return a.as_number() + b.as_number();
+      break;
+    default:
+      error() << "Unexpected operand type for sub";
+      return Value(ValueType::Error);
+  }
+}
+
+Value VirtualMachine::sub(const Value& a, const Value& b) {
+  switch (a.getType()) {
+    case ValueType::Number:
+      return a.as_number() - b.as_number();
+      break;
+    default:
+      error() << "Unexpected operand type for sub";
+      return Value(ValueType::Error);
+  }
+}
+
+Value VirtualMachine::mul(const Value& a, const Value& b) {
+  switch (a.getType()) {
+    case ValueType::Number:
+      return a.as_number() * b.as_number();
+      break;
+    default:
+      error() << "Unexpected operand type for mul";
+      return Value(ValueType::Error);
+  }
+}
+
+Value VirtualMachine::div(const Value& a, const Value& b) {
+  switch (a.getType()) {
+    case ValueType::Number:
+      return a.as_number() / b.as_number();
+      break;
+    default:
+      error() << "Unexpected operand type for div";
+      return Value(ValueType::Error);
+  }
+}
+
+Value VirtualMachine::exp(const Value& a, const Value& b) {
+  switch (a.getType()) {
+    case ValueType::Number:
+      return std::pow(a.as_number(), b.as_number());
+      break;
+    default:
+      error() << "Unexpected operand type for exp";
+      return Value(ValueType::Error);
+  }
+}
+
 Value VirtualMachine::execute(const Bytecode* code) {
+  m_code = code;
   m_ip = code->get_code().data();
 
   auto read_const = [&]() {
     return code->get_const(*m_ip++);
   };
 
-  while (m_ip != nullptr) {
+  while (m_ip != nullptr && !m_halt) {
     std::uint8_t op = *m_ip++;
 
     switch (op) {
@@ -92,44 +203,62 @@ Value VirtualMachine::execute(const Bytecode* code) {
         m_stack.push_back(value);
         break;
       }
-      case Negate: push(-pop()); break;
+      case Negate:
+        push(neg(pop())); break;
       case Add: {
         Value a = pop();
         Value b = pop();
-        push(a + b);
+        push(add(a, b));
 
         break;
       }
       case Subtract: {
         Value b = pop();
         Value a = pop();
-        push(a - b);
+        push(sub(a, b));
 
         break;
       }
       case Divide: {
         Value b = pop();
         Value a = pop();
-        push(a / b);
+        push(div(a, b));
 
         break;
       }
       case Multiply: {
         Value b = pop();
         Value a = pop();
-        push(a * b);
+        push(mul(a, b));
 
         break;
       }
       case Exp: {
         Value b = pop();
         Value a = pop();
-        push(std::pow(a, b));
+        push(exp(a, b));
 
         break;
       }
     }
   }
 
-  return -1;
+  halt();
+  return Value(ValueType::Error);
+}
+
+void VirtualMachine::halt() {
+  m_stack.clear();
+  m_ip = nullptr;
+  m_halt = true;
+  m_code = nullptr;
+}
+
+std::ostream& VirtualMachine::error() {
+  std::size_t offset = (std::size_t) (m_ip - m_code->m_code.data());
+  std::cout << "Runtime error on line " << m_code->m_lines[offset] << ": ";
+
+  m_halt = true;
+
+  return std::cout;
 }

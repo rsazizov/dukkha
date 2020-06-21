@@ -45,6 +45,7 @@ void Compiler::expression() {
 }
 
 void Compiler::addition() {
+  // TODO: assert?
   multiplication();
 
   VirtualMachine::Instruction op {};

@@ -17,7 +17,7 @@ enum class TokenType {
   Function, Return, Let, Const, For, While, If, Else,
 
   // Literals
-  NumberLiteral, StringLiteral,
+  NumberLiteral, StringLiteral, Null,
 
   Identifer,
 

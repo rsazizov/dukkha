@@ -165,6 +165,7 @@ Token Lexer::keyword_or_identifer() {
     case 'c': return keyword(1, 4, "onst", TokenType::Const);
     case 'w': return keyword(1, 4, "hile", TokenType::While);
     case 'e': return keyword(1, 3, "lse", TokenType::Else);
+    case 'n': return keyword(1, 3, "ull", TokenType::Null);
     case 'r': return keyword(1, 5, "eturn", TokenType::Return);
   }
 
