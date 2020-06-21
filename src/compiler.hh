@@ -16,7 +16,12 @@ public:
 
 private:
   bool compile();
+
   void expression();
+  void addition();
+  void multiplication();
+  void unary();
+  void arbitrary();
 
   void error(const Token at, const char* msg);
 
@@ -27,8 +32,8 @@ private:
 
   Bytecode m_code {};
 
+  Token m_prev {};
   Token m_cursor {};
-  Token m_peek {};
 
   Lexer m_lexer;
 };

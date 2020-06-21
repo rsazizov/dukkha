@@ -1,6 +1,6 @@
 # Dukkha
 
-Dukkha is a toy programming language and a corresponding implementation in C++.
+Dukkha is a toy programming language and a corresponding implementation in C++ (more like C with classes).
 
 ## Features
 
@@ -26,13 +26,16 @@ Each instruction is 1 byte long. However, some instructions may have different v
 Below is BNF representation of the language (for now, I'll add more rules as I go).
 
 ```
-<expression> := <number>
-              | "(" <expression> ")"
-              | <number> <binary> <number>
-              | <unary> <expression>;
+program := <expression>;
 
-<binary> := "+";
-<unary> := "-";
+<expression> := <addition>;
+<addition> := <multiplication> ( ("+" | "-") <multiplication>)+;
+<multiplication> := <unary> ( ("*" | "/") <unary>)+;
+
+<unary> := "-" <unary> | <arbitrary>;
+
+<arbitrary> := <number> | "(" <expression> ")";
+
 ```
 
 ## Usage

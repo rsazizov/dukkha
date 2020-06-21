@@ -10,7 +10,7 @@ Compiler::Compiler() {
 
 bool Compiler::from_file(const char* path, Bytecode& bytecode) {
   m_lexer.from_file(path);
-  m_peek = m_lexer.next();
+  m_cursor = m_lexer.next();
 
   bool result = compile();
   bytecode = m_code;
@@ -19,8 +19,6 @@ bool Compiler::from_file(const char* path, Bytecode& bytecode) {
 }
 
 bool Compiler::compile() {
-  advance();
-
   expression();
   emit(VirtualMachine::Return);
 
@@ -35,59 +33,85 @@ bool is_operator(TokenType type) {
 }
 
 void Compiler::expression() {
-  switch (m_cursor.type) {
-    case TokenType::Minus:
-      advance();
-      expression();
-      emit(VirtualMachine::Negate);
-      break;
-    case TokenType::NumberLiteral: {
-      Value a = m_cursor.as_number;
-      std::uint8_t pa = m_code.push_const(a);
-      emit(VirtualMachine::Constant16);
-      emit(pa);
+  addition();
+}
 
-      if (m_peek.type == TokenType::Plus) {
-        consume(TokenType::Plus, "Expected operator");
+void Compiler::addition() {
+  multiplication();
 
-        Value b = m_peek.as_number;
-        std::size_t pb = m_code.push_const(b);
-        emit(VirtualMachine::Constant16);
-        emit(pb);
+  VirtualMachine::Instruction op {};
 
-        emit(VirtualMachine::Add);
-      }
-
-      break;
+  while (m_cursor.type == TokenType::Plus || m_cursor.type == TokenType::Minus) {
+    switch (m_cursor.type) {
+      case TokenType::Plus: op = VirtualMachine::Add; break;
+      case TokenType::Minus: op = VirtualMachine::Subtract; break;
+      default: break;
     }
 
+    advance();
+    multiplication();
+
+    m_code.push_op(op, 0);
+  }
+}
+
+void Compiler::multiplication() {
+  unary();
+
+  VirtualMachine::Instruction op {};
+
+  while (m_cursor.type == TokenType::Slash || m_cursor.type == TokenType::Star) {
+    switch (m_cursor.type) {
+      case TokenType::Star: op = VirtualMachine::Multiply; break;
+      case TokenType::Slash: op = VirtualMachine::Divide; break;
+      default: break;
+    }
+
+    advance();
+    unary();
+    m_code.push_op(op, 0);
+  }
+}
+
+void Compiler::unary() {
+  if (m_cursor.type == TokenType::Minus) {
+    advance();
+    unary();
+    m_code.push_op(VirtualMachine::Negate, 0);
+  } else {
+    arbitrary();
+  }
+}
+
+void Compiler::arbitrary() {
+  switch (m_cursor.type) {
+    case TokenType::NumberLiteral: {
+      std::size_t pa = m_code.push_const(m_cursor.as_number);
+      emit(VirtualMachine::Constant16);
+      emit(pa);
+      advance();
+      break;
+    }
     case TokenType::LeftRound:
       advance();
       expression();
-      /* consume(TokenType::RightRound, "expected ')'"); */
+      consume(TokenType::RightRound, "')' expected.");
       break;
-
     default:
-      break;
+      error(m_cursor, "unexpected token.");
   }
 }
 
 void Compiler::advance() {
-  // Skip any error tokens.
-  /* while (m_cursor.type == TokenType::Error) { */
-  /*   error(m_cursor, ""); */
-  /*   m_peek = m_lexer.next(); */
-  /* } */
-
-  m_cursor = m_peek;
-  m_peek = m_lexer.next();
+  m_prev = m_cursor;
+  m_cursor = m_lexer.next();
 }
 
 void Compiler::consume(TokenType type, const char* msg) {
-  if (m_peek.type == type) {
+  if (m_cursor.type == type) {
     advance();
   } else {
-    error(m_peek, msg);
+    error(m_cursor, msg);
   }
 }
 
