@@ -116,8 +116,16 @@ void Compiler::arbitrary() {
       expression();
       consume(TokenType::RightRound, "')' expected");
       break;
+
+    case TokenType::StringLiteral: {
+      std::size_t pa = m_code.push_const(m_cursor.as_string);
+      emit(VirtualMachine::Constant16);
+      emit(pa);
+      advance();
+      break;
+    }
     default:
-      error(m_cursor, "unexpected token.");
+      error(m_cursor, "unexpected token");
   }
 }
 

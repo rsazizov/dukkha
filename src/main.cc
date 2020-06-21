@@ -12,7 +12,8 @@ int main(int argc, char* argv[]) {
 
   if (!compiled) return EX_SOFTWARE;
 
-  code.disassemble();
+  code.dump_data();
+  code.dump_text();
 
   VirtualMachine vm;
   Value result = vm.execute(&code);

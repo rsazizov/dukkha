@@ -1,52 +1,12 @@
 #include "virtual_machine.hh"
+#include "value.hh"
 
 #include <cstdlib>
 #include <iomanip>
 #include <cmath>
 #include <ios>
+#include <sstream>
 #include <iostream>
-
-Value::Value(ValueType type) {
-  m_type = type;
-}
-
-Value::Value(double value) {
-  m_type = ValueType::Number;
-  m_number = value;
-}
-
-Value::Value(bool value) {
-  m_type = ValueType::Bool;
-  m_bool = value;
-}
-
-bool Value::is(ValueType type) const {
-  return m_type == type;
-}
-
-ValueType Value::getType() const {
-  return m_type;
-}
-
-double Value::as_number() const {
-  // TODO: assert?
-  return m_number;
-}
-
-bool Value::as_bool() const {
-  // TODO: assert?
-  return m_bool;
-}
-
-std::ostream& operator <<(std::ostream& os, const Value& value) {
-  switch (value.getType()) {
-    case ValueType::Number: os << value.as_number(); break;
-    case ValueType::Bool: os << std::boolalpha << value.as_bool(); break;
-    default: os << "Error"; break;
-  }
-
-  return os;
-}
 
 void Bytecode::clear() {
   m_code.clear();
@@ -74,14 +34,22 @@ const std::vector<std::uint8_t>& Bytecode::get_code() const {
   return m_code;
 }
 
-void Bytecode::disassemble() {
-  std::cout << "--- Bytecode dump ---\n";
+void Bytecode::dump_data() {
+  std::cout << ".rodata:\n";
+  for (std::size_t i = 0; i < m_consts.size(); ++i) {
+    std::cout << std::setfill('0');
+    std::cout << "$" << std::setw(5) << i << " " << m_consts[i] << "\n";
+  }
+}
+
+void Bytecode::dump_text() {
+  std::cout << ".text:\n";
 
   for (std::size_t i = 0; i < m_code.size(); ++i) {
     std::uint8_t op = m_code[i];
 
     std::cout << std::setfill('0');
-    std::cout << std::setw(5) << i << ":" << std::setw(3) << m_lines[i] << " ";
+    std::cout << "$" << std::setw(5) << i << ":" << std::setw(3) << m_lines[i] << " ";
 
     switch (op) {
       case VirtualMachine::Add: std::cout << "add\n"; break;
@@ -96,8 +64,6 @@ void Bytecode::disassemble() {
       case VirtualMachine::Return: std::cout << "ret\n"; break;
     }
   }
-
-  std::cout << "--------------------\n";
 }
 
 VirtualMachine::VirtualMachine() {
@@ -119,69 +85,72 @@ Value VirtualMachine::pop() {
 }
 
 Value VirtualMachine::neg(const Value& a) {
-  switch (a.getType()) {
-    case ValueType::Number:
-      return -a.as_number();
-      break;
-    default:
-      error() << "Unexpected operand type for negation";
-      return Value(ValueType::Error);
+  if (a.is(ValueType::Number)) {
+    return -a.as_number();
   }
+
+  error() << "Unexpected operand type: -" << a.getType();
+  return Value(ValueType::Error);
 }
 
 Value VirtualMachine::add(const Value& a, const Value& b) {
-  switch (a.getType()) {
-    case ValueType::Number:
+  if (a.getType() == b.getType()) {
+    if (a.getType() == ValueType::Number) {
       return a.as_number() + b.as_number();
-      break;
-    default:
-      error() << "Unexpected operand type for sub";
-      return Value(ValueType::Error);
+    } else if (a.getType() == ValueType::String) {
+      return a.as_string() + b.as_string();
+    }
   }
+
+  error() << "Unexpected operand types: " << a.getType() << "+" << b.getType();
+
+  return Value(ValueType::Error);
 }
 
 Value VirtualMachine::sub(const Value& a, const Value& b) {
-  switch (a.getType()) {
-    case ValueType::Number:
-      return a.as_number() - b.as_number();
-      break;
-    default:
-      error() << "Unexpected operand type for sub";
-      return Value(ValueType::Error);
+  if (a.is(ValueType::Number) && b.is(ValueType::Number)) {
+    return a.as_number() - b.as_number();
   }
+
+  error() << "Unexpected operand types: " << a.getType() << "-" << b.getType();
+  return Value(ValueType::Error);
 }
 
 Value VirtualMachine::mul(const Value& a, const Value& b) {
-  switch (a.getType()) {
-    case ValueType::Number:
+  if (a.is(ValueType::Number) && b.is(ValueType::Number)) {
       return a.as_number() * b.as_number();
-      break;
-    default:
-      error() << "Unexpected operand type for mul";
-      return Value(ValueType::Error);
+  } else if (a.is(ValueType::String) && b.is(ValueType::Number)) {
+    std::stringstream ss("");
+
+    for (std::size_t i = 0; i < b.as_number(); ++i) {
+      ss << a.as_string();
+    }
+
+    return Value(ss.str());
+  } else if (a.is(ValueType::Number) && b.is(ValueType::String)) {
+    return mul(b, a);
   }
+
+  error() << "Unexpected operand types: " << a.getType() << "*" << b.getType();
+  return Value(ValueType::Error);
 }
 
 Value VirtualMachine::div(const Value& a, const Value& b) {
-  switch (a.getType()) {
-    case ValueType::Number:
-      return a.as_number() / b.as_number();
-      break;
-    default:
-      error() << "Unexpected operand type for div";
-      return Value(ValueType::Error);
+  if (a.is(ValueType::Number) && b.is(ValueType::Number)) {
+    return a.as_number() / b.as_number();
   }
+
+  error() << "Unexpected operand types: " << a.getType() << "/" << b.getType();
+  return Value(ValueType::Error);
 }
 
 Value VirtualMachine::exp(const Value& a, const Value& b) {
-  switch (a.getType()) {
-    case ValueType::Number:
-      return std::pow(a.as_number(), b.as_number());
-      break;
-    default:
-      error() << "Unexpected operand type for exp";
-      return Value(ValueType::Error);
+  if (a.is(ValueType::Number) && b.is(ValueType::Number)) {
+    return std::pow(a.as_number(), b.as_number());
   }
+
+  error() << "Unexpected operand types: " << a.getType() << "**" << b.getType();
+  return Value(ValueType::Error);
 }
 
 Value VirtualMachine::execute(const Bytecode* code) {
@@ -206,8 +175,8 @@ Value VirtualMachine::execute(const Bytecode* code) {
       case Negate:
         push(neg(pop())); break;
       case Add: {
-        Value a = pop();
         Value b = pop();
+        Value a = pop();
         push(add(a, b));
 
         break;
@@ -256,7 +225,7 @@ void VirtualMachine::halt() {
 
 std::ostream& VirtualMachine::error() {
   std::size_t offset = (std::size_t) (m_ip - m_code->m_code.data());
-  std::cout << "Runtime error on line " << m_code->m_lines[offset] << ": ";
+  std::cout << "Runtime error on " << m_code->m_lines[offset] << ":" << offset << ": ";
 
   m_halt = true;
 

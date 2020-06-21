@@ -4,39 +4,7 @@
 #include <vector>
 #include <ostream>
 
-enum class ValueType : std::uint8_t {
-  // TODO: float and int
-  Number,
-  Bool,
-  Symbol,
-  String,
-
-  // Used internally.
-  Error
-};
-
-class Value {
-public:
-  Value(ValueType type);
-  Value(double value);
-  Value(bool value);
-
-  bool is(ValueType type) const;
-
-  ValueType getType() const;
-
-  double as_number() const;
-  bool as_bool() const;
-private:
-  ValueType m_type;
-
-  union {
-    double m_number { 0.0 };
-    bool m_bool;
-  };
-};
-
-std::ostream& operator <<(std::ostream& os, const Value& value);
+#include "value.hh"
 
 class Bytecode {
 public:
@@ -51,7 +19,8 @@ public:
 
   const std::vector<std::uint8_t>& get_code() const;
 
-  void disassemble();
+  void dump_data();
+  void dump_text();
 private:
   friend class VirtualMachine;
 
