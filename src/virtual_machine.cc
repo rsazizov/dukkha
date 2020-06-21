@@ -1,4 +1,6 @@
 #include "virtual_machine.hh"
+
+#include <iomanip>
 #include <iostream>
 
 void Bytecode::clear() {
@@ -25,6 +27,31 @@ Value Bytecode::get_const(std::size_t address) const {
 
 const std::vector<std::uint8_t>& Bytecode::get_code() const {
   return m_code;
+}
+
+void Bytecode::disassemble() {
+  std::cout << "--- Bytecode dump ---\n";
+
+  for (std::size_t i = 0; i < m_code.size(); ++i) {
+    std::uint8_t op = m_code[i];
+
+    std::cout << std::setfill('0');
+    std::cout << std::setw(5) << i << ":" << std::setw(3) << m_lines[i] << " ";
+
+    switch (op) {
+      case VirtualMachine::Add: std::cout << "add\n"; break;
+      case VirtualMachine::Subtract: std::cout << "sub\n"; break;
+      case VirtualMachine::Multiply: std::cout << "mul\n"; break;
+      case VirtualMachine::Divide: std::cout << "div\n"; break;
+      case VirtualMachine::Negate: std::cout << "neg\n"; break;
+      case VirtualMachine::Constant16:
+        std::cout << "push $" << (int) m_code[++i] << "\n";
+        break;
+      case VirtualMachine::Return: std::cout << "ret\n"; break;
+    }
+  }
+
+  std::cout << "--------------------\n";
 }
 
 VirtualMachine::VirtualMachine() {

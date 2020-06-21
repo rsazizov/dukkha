@@ -17,6 +17,8 @@ public:
   Value get_const(std::size_t address) const;
 
   const std::vector<std::uint8_t>& get_code() const;
+
+  void disassemble();
 private:
   std::vector<std::size_t> m_lines;
   std::vector<Value> m_consts;

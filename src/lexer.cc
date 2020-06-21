@@ -244,6 +244,7 @@ Token Lexer::number() {
   }
 
   m_peek = *(--m_cursor);
+  m_position--;
 
   token.as_number = value * pow(10, -n_decimals);
   return token;

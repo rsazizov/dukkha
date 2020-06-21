@@ -13,16 +13,24 @@ bool Compiler::from_file(const char* path, Bytecode& bytecode) {
   m_cursor = m_lexer.next();
 
   bool result = compile();
-  bytecode = m_code;
 
-  return result;
+  if (result) {
+    bytecode = m_code;
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool Compiler::compile() {
+  m_had_error = false;
+
   expression();
+
+  consume(TokenType::EndOfFile, "EOF expected");
   emit(VirtualMachine::Return);
 
-  return true;
+  return !m_had_error;
 }
 
 bool is_operator(TokenType type) {
@@ -45,13 +53,13 @@ void Compiler::addition() {
     switch (m_cursor.type) {
       case TokenType::Plus: op = VirtualMachine::Add; break;
       case TokenType::Minus: op = VirtualMachine::Subtract; break;
-      default: break;
+      default: error(m_cursor, "Unexpected token.");
     }
 
     advance();
     multiplication();
 
-    m_code.push_op(op, 0);
+    emit(op);
   }
 }
 
@@ -64,12 +72,12 @@ void Compiler::multiplication() {
     switch (m_cursor.type) {
       case TokenType::Star: op = VirtualMachine::Multiply; break;
       case TokenType::Slash: op = VirtualMachine::Divide; break;
-      default: break;
+      default: error(m_cursor, "Unexpected token.");
     }
 
     advance();
     unary();
-    m_code.push_op(op, 0);
+    emit(op);
   }
 }
 
@@ -77,7 +85,7 @@ void Compiler::unary() {
   if (m_cursor.type == TokenType::Minus) {
     advance();
     unary();
-    m_code.push_op(VirtualMachine::Negate, 0);
+    emit(VirtualMachine::Negate);
   } else {
     arbitrary();
   }
@@ -95,7 +103,7 @@ void Compiler::arbitrary() {
     case TokenType::LeftRound:
       advance();
       expression();
-      consume(TokenType::RightRound, "')' expected.");
+      consume(TokenType::RightRound, "')' expected");
       break;
     default:
       error(m_cursor, "unexpected token.");
@@ -116,10 +124,14 @@ void Compiler::consume(TokenType type, const char* msg) {
 }
 
 void Compiler::emit(std::uint8_t byte) {
-  m_code.push_op(byte, m_cursor.line);
+  if (!m_had_error) {
+    m_code.push_op(byte, m_prev.line);
+  }
 }
 
-void Compiler::error(const Token at, const char* msg) {
+void Compiler::error(const Token& at, const char* msg) {
+  m_had_error = true;
   std::cout << "Error at: " << at.line << ":"
-            << at.position << " - " << msg << "\n";
+            << at.position << " - " << msg
+            << ", got " << at.type << ".\n";
 }

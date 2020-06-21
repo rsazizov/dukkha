@@ -8,7 +8,11 @@ int main(int argc, char* argv[]) {
   Bytecode code;
 
   Compiler compiler;
-  compiler.from_file("examples/expression.du", code);
+  bool compiled = compiler.from_file("examples/expression.du", code);
+
+  if (!compiled) return EX_SOFTWARE;
+
+  code.disassemble();
 
   VirtualMachine vm;
   Value result = vm.execute(&code);

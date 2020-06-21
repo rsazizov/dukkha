@@ -26,7 +26,7 @@ Each instruction is 1 byte long. However, some instructions may have different v
 Below is BNF representation of the language (for now, I'll add more rules as I go).
 
 ```
-program := <expression>;
+program := <expression> EOF;
 
 <expression> := <addition>;
 <addition> := <multiplication> ( ("+" | "-") <multiplication>)+;

@@ -23,7 +23,7 @@ private:
   void unary();
   void arbitrary();
 
-  void error(const Token at, const char* msg);
+  void error(const Token& at, const char* msg);
 
   void advance();
   void consume(TokenType type, const char* msg);
@@ -36,4 +36,6 @@ private:
   Token m_cursor {};
 
   Lexer m_lexer;
+
+  bool m_had_error { false };
 };
