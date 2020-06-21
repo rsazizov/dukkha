@@ -34,6 +34,7 @@ public:
     Add,
     Subtract,
     Multiply,
+    Exp,
     Divide
   };
 

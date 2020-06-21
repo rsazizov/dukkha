@@ -40,6 +40,7 @@ std::ostream& operator <<(std::ostream& os, TokenType type) {
     PAIR(TokenType::PlusEq),
     PAIR(TokenType::SlashEq),
     PAIR(TokenType::EqEq),
+    PAIR(TokenType::StarStar),
     PAIR(TokenType::Function),
     PAIR(TokenType::Return),
     PAIR(TokenType::Let),
@@ -132,7 +133,14 @@ Token Lexer::next() {
     case '.': return make_token(TokenType::Dot);
     case ',': return make_token(TokenType::Comma);
     case '-': return match_token('=', TokenType::MinusEq, TokenType::Minus);
-    case '*': return match_token('=', TokenType::StarEq, TokenType::Star);
+    case '*': {
+      advance();
+      switch (*m_cursor) {
+        case '=': return make_token(TokenType::StarEq);
+        case '*': return make_token(TokenType::StarStar);
+        default: return make_token(TokenType::Star);
+      }
+    }
     case '+': return match_token('=', TokenType::PlusEq, TokenType::Plus);
     case '/': return match_token('=', TokenType::SlashEq, TokenType::Slash);
     case '=': return match_token('=', TokenType::EqEq, TokenType::Eq);

@@ -11,7 +11,7 @@ enum class TokenType {
   Semicolon, Dot, Comma, Minus, Star, Plus, Slash, Eq,
 
   // 2 character tokens
-  MinusEq, StarEq, PlusEq, SlashEq, EqEq,
+  MinusEq, StarEq, PlusEq, SlashEq, EqEq, StarStar,
 
   // Keywords
   Function, Return, Let, Const, For, While, If, Else,

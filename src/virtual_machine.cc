@@ -1,6 +1,7 @@
 #include "virtual_machine.hh"
 
 #include <iomanip>
+#include <cmath>
 #include <iostream>
 
 void Bytecode::clear() {
@@ -44,6 +45,7 @@ void Bytecode::disassemble() {
       case VirtualMachine::Multiply: std::cout << "mul\n"; break;
       case VirtualMachine::Divide: std::cout << "div\n"; break;
       case VirtualMachine::Negate: std::cout << "neg\n"; break;
+      case VirtualMachine::Exp: std::cout << "exp\n"; break;
       case VirtualMachine::Constant16:
         std::cout << "push $" << (int) m_code[++i] << "\n";
         break;
@@ -116,6 +118,13 @@ Value VirtualMachine::execute(const Bytecode* code) {
         Value b = pop();
         Value a = pop();
         push(a * b);
+
+        break;
+      }
+      case Exp: {
+        Value b = pop();
+        Value a = pop();
+        push(std::pow(a, b));
 
         break;
       }

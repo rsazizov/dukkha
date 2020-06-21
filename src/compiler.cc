@@ -64,7 +64,7 @@ void Compiler::addition() {
 }
 
 void Compiler::multiplication() {
-  unary();
+  exp();
 
   VirtualMachine::Instruction op {};
 
@@ -76,8 +76,18 @@ void Compiler::multiplication() {
     }
 
     advance();
-    unary();
+    exp();
     emit(op);
+  }
+}
+
+void Compiler::exp() {
+  unary();
+
+  while (m_cursor.type == TokenType::StarStar) {
+    advance();
+    unary();
+    emit(VirtualMachine::Exp);
   }
 }
 

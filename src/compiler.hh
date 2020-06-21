@@ -20,6 +20,7 @@ private:
   void expression();
   void addition();
   void multiplication();
+  void exp();
   void unary();
   void arbitrary();
 
