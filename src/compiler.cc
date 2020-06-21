@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <math.h>
 
 Compiler::Compiler() {
 }
@@ -33,15 +34,87 @@ bool Compiler::compile() {
   return !m_had_error;
 }
 
-bool is_operator(TokenType type) {
-  return type == TokenType::Plus ||
-    type == TokenType::Minus ||
-    type == TokenType::Star ||
-    type == TokenType::Slash;
+void Compiler::expression() {
+  logical_or();
 }
 
-void Compiler::expression() {
+void Compiler::logical_or() {
+  logical_and();
+
+  while (m_cursor.type == TokenType::Or) {
+    advance();
+    logical_and();
+    emit(VirtualMachine::Or);
+  }
+}
+
+void Compiler::logical_and() {
+  logical_not();
+
+  while (m_cursor.type == TokenType::And) {
+    advance();
+    logical_not();
+    emit(VirtualMachine::And);
+  }
+}
+
+void Compiler::logical_not() {
+  if (m_cursor.type == TokenType::Not) {
+    comparison();
+    emit(VirtualMachine::Not);
+  } else {
+    comparison();
+  }
+}
+
+bool is_comparison_op(TokenType type) {
+  switch (type) {
+    case TokenType::EqEq:
+    case TokenType::BangEq:
+    case TokenType::GreaterEq:
+    case TokenType::LessEq:
+    case TokenType::Greater:
+    case TokenType::Less:
+      return true;
+    default:
+      return false;
+  }
+}
+
+void Compiler::comparison() {
   addition();
+
+  while (is_comparison_op(m_cursor.type)) {
+    TokenType op = m_cursor.type;
+
+    advance();
+    addition();
+
+    switch (op) {
+      case TokenType::EqEq:
+        emit(VirtualMachine::Equal);
+        break;
+      case TokenType::BangEq:
+        emit(VirtualMachine::Equal);
+        emit(VirtualMachine::Not);
+        break;
+      case TokenType::GreaterEq:
+        emit(VirtualMachine::Less);
+        emit(VirtualMachine::Not);
+        break;
+      case TokenType::LessEq:
+        emit(VirtualMachine::Greater);
+        emit(VirtualMachine::Not);
+        break;
+      case TokenType::Greater:
+        emit(VirtualMachine::Greater);
+        break;
+      case TokenType::Less:
+        emit(VirtualMachine::Less);
+        break;
+      default: break;
+    }
+  }
 }
 
 void Compiler::addition() {
@@ -116,7 +189,6 @@ void Compiler::arbitrary() {
       expression();
       consume(TokenType::RightRound, "')' expected");
       break;
-
     case TokenType::StringLiteral: {
       std::size_t pa = m_code.push_const(m_cursor.as_string);
       emit(VirtualMachine::Constant16);
@@ -124,8 +196,22 @@ void Compiler::arbitrary() {
       advance();
       break;
     }
+    case TokenType::True: {
+      std::size_t pa = m_code.push_const(true);
+      emit(VirtualMachine::Constant16);
+      emit(pa);
+      advance();
+      break;
+    }
+    case TokenType::False: {
+      std::size_t pa = m_code.push_const(false);
+      emit(VirtualMachine::Constant16);
+      emit(pa);
+      advance();
+      break;
+    }
     default:
-      error(m_cursor, "unexpected token");
+      error(m_cursor, "invalid syntax");
   }
 }
 

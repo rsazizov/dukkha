@@ -6,6 +6,7 @@
 #include <cstring>
 #include <sstream>
 #include <cmath>
+#include <unordered_map>
 
 char* strdup(const char* str) {
   char* dup = new char[std::strlen(str) + 1];
@@ -40,6 +41,8 @@ std::ostream& operator <<(std::ostream& os, TokenType type) {
     PAIR(TokenType::PlusEq),
     PAIR(TokenType::SlashEq),
     PAIR(TokenType::EqEq),
+    PAIR(TokenType::True),
+    PAIR(TokenType::False),
     PAIR(TokenType::StarStar),
     PAIR(TokenType::Function),
     PAIR(TokenType::Return),
@@ -142,7 +145,10 @@ Token Lexer::next() {
       }
     }
     case '+': return match_token('=', TokenType::PlusEq, TokenType::Plus);
+    case '<': return match_token('=', TokenType::LessEq, TokenType::Less);
+    case '>': return match_token('=', TokenType::GreaterEq, TokenType::Greater);
     case '/': return match_token('=', TokenType::SlashEq, TokenType::Slash);
+    case '!': return match_token('=', TokenType::BangEq, TokenType::Bang);
     case '=': return match_token('=', TokenType::EqEq, TokenType::Eq);
     case '\'': return string();
   }
@@ -152,20 +158,28 @@ Token Lexer::next() {
 
 Token Lexer::keyword_or_identifer() {
   switch (*m_cursor) {
+    case 'a': return keyword(1, 2, "nd", TokenType::And);
+    case 'o': return keyword(1, 1, "r", TokenType::Or);
+    case 't': return keyword(1, 3, "rue", TokenType::True);
     case 'f':
       switch (m_peek) {
+        case 'a': return keyword(2, 3, "lse", TokenType::False);
         case 'u': return keyword(2, 6, "nction", TokenType::Function);
         case 'o': return keyword(2, 1, "r", TokenType::For);
       }
       break;
-
-    // TODO: Use contexpr for string length?
     case 'l': return keyword(1, 2, "et", TokenType::Let);
     case 'i': return keyword(1, 1, "f", TokenType::If);
     case 'c': return keyword(1, 4, "onst", TokenType::Const);
     case 'w': return keyword(1, 4, "hile", TokenType::While);
     case 'e': return keyword(1, 3, "lse", TokenType::Else);
-    case 'n': return keyword(1, 3, "ull", TokenType::Null);
+    case 'n': {
+      switch (m_peek) {
+        case 'u': return keyword(2, 3, "ull", TokenType::Null);
+        case 'o': return keyword(2, 1, "t", TokenType::Not);
+      }
+      break;
+    }
     case 'r': return keyword(1, 5, "eturn", TokenType::Return);
   }
 
@@ -178,10 +192,11 @@ Token Lexer::keyword(std::size_t start, std::size_t len,
   bool match = !std::strncmp(str, m_cursor + start,
       std::strlen(str));
 
-  if (match && std::isspace(*(m_cursor + start + len))) {
+  char after = *(m_cursor + start + len);
+  if (match && !std::isalpha(after) && !std::isdigit(after)) {
     Token token = make_token(type);
-    m_cursor += start + len;
-    m_position += start + len ;
+    m_cursor += start + len - 1;
+    m_position += start + len - 1;
 
     return token;
   }

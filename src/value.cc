@@ -2,12 +2,12 @@
 
 std::ostream& operator <<(std::ostream& os, ValueType type) {
   switch (type) {
-    case ValueType::Number: os << "Number";
-    case ValueType::Bool: os << "Bool";
-    case ValueType::Symbol: os << "Symbol";
-    case ValueType::Object: os << "Object";
-    case ValueType::String: os << "String";
-    case ValueType::Error: os << "Error";
+    case ValueType::Number: os << "Number"; break;
+    case ValueType::Bool: os << "Bool"; break;
+    case ValueType::Symbol: os << "Symbol"; break;
+    case ValueType::Object: os << "Object"; break;
+    case ValueType::String: os << "String"; break;
+    case ValueType::Error: os << "Error"; break;
   }
 
   return os;

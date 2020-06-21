@@ -3,18 +3,17 @@
 #include <ostream>
 #include <vector>
 #include <string>
-#include <unordered_map>
 
 enum class TokenType {
   // 1 character tokens
   LeftCurly, RightCurly, LeftSquare, RightSquare, LeftRound, RightRound,
-  Semicolon, Dot, Comma, Minus, Star, Plus, Slash, Eq,
+  Semicolon, Dot, Comma, Minus, Star, Plus, Slash, Eq, Less, Greater, Bang,
 
   // 2 character tokens
-  MinusEq, StarEq, PlusEq, SlashEq, EqEq, StarStar,
+  MinusEq, StarEq, PlusEq, SlashEq, EqEq, StarStar, LessEq, GreaterEq, BangEq,
 
   // Keywords
-  Function, Return, Let, Const, For, While, If, Else,
+  Function, Return, Let, Const, For, While, If, Else, And, Or, Not, True, False,
 
   // Literals
   NumberLiteral, StringLiteral, Null,

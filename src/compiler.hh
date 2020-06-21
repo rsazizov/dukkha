@@ -18,6 +18,12 @@ private:
   bool compile();
 
   void expression();
+
+  void logical_or();
+  void logical_and();
+  void logical_not();
+  void comparison();
+
   void addition();
   void multiplication();
   void exp();

@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <cmath>
 #include <ios>
+#include <math.h>
 #include <sstream>
 #include <iostream>
 
@@ -57,11 +58,17 @@ void Bytecode::dump_text() {
       case VirtualMachine::Multiply: std::cout << "mul\n"; break;
       case VirtualMachine::Divide: std::cout << "div\n"; break;
       case VirtualMachine::Negate: std::cout << "neg\n"; break;
+      case VirtualMachine::Not: std::cout << "not\n"; break;
+      case VirtualMachine::And: std::cout << "and\n"; break;
+      case VirtualMachine::Or: std::cout << "or\n"; break;
+      case VirtualMachine::Equal: std::cout << "eq\n"; break;
+      case VirtualMachine::Greater: std::cout << "gt\n"; break;
+      case VirtualMachine::Less: std::cout << "lt\n"; break;
       case VirtualMachine::Exp: std::cout << "exp\n"; break;
+      case VirtualMachine::Return: std::cout << "ret\n"; break;
       case VirtualMachine::Constant16:
         std::cout << "push $" << (int) m_code[++i] << "\n";
         break;
-      case VirtualMachine::Return: std::cout << "ret\n"; break;
     }
   }
 }
@@ -89,7 +96,7 @@ Value VirtualMachine::neg(const Value& a) {
     return -a.as_number();
   }
 
-  error() << "Unexpected operand type: -" << a.getType();
+  error() << "Unexpected operand type: -" << a.getType() << "\n";
   return Value(ValueType::Error);
 }
 
@@ -102,7 +109,8 @@ Value VirtualMachine::add(const Value& a, const Value& b) {
     }
   }
 
-  error() << "Unexpected operand types: " << a.getType() << "+" << b.getType();
+  error() << "Unexpected operand types: " << a.getType()
+          << "+" << b.getType() << "\n";
 
   return Value(ValueType::Error);
 }
@@ -112,7 +120,8 @@ Value VirtualMachine::sub(const Value& a, const Value& b) {
     return a.as_number() - b.as_number();
   }
 
-  error() << "Unexpected operand types: " << a.getType() << "-" << b.getType();
+  error() << "Unexpected operand types: " << a.getType()
+          << "-" << b.getType() << "\n";
   return Value(ValueType::Error);
 }
 
@@ -131,7 +140,8 @@ Value VirtualMachine::mul(const Value& a, const Value& b) {
     return mul(b, a);
   }
 
-  error() << "Unexpected operand types: " << a.getType() << "*" << b.getType();
+  error() << "Unexpected operand types: " << a.getType()
+          << "*" << b.getType() << "\n";
   return Value(ValueType::Error);
 }
 
@@ -140,7 +150,8 @@ Value VirtualMachine::div(const Value& a, const Value& b) {
     return a.as_number() / b.as_number();
   }
 
-  error() << "Unexpected operand types: " << a.getType() << "/" << b.getType();
+  error() << "Unexpected operand types: " << a.getType()
+          << "/" << b.getType() << "\n";
   return Value(ValueType::Error);
 }
 
@@ -149,7 +160,69 @@ Value VirtualMachine::exp(const Value& a, const Value& b) {
     return std::pow(a.as_number(), b.as_number());
   }
 
-  error() << "Unexpected operand types: " << a.getType() << "**" << b.getType();
+  error() << "Unexpected operand types: " << a.getType()
+          << "**" << b.getType() << "\n";
+  return Value(ValueType::Error);
+}
+
+Value VirtualMachine::logical_not(const Value& a) {
+  if (a.is(ValueType::Bool)) {
+    return !a.as_bool();
+  }
+
+  error() << "Unexpected operand type: not " << a.getType() << "\n";
+  return Value(ValueType::Error);
+}
+
+Value VirtualMachine::logical_and(const Value& a, const Value& b) {
+  if (a.is(ValueType::Bool) && b.is(ValueType::Bool)) {
+    return a.as_bool() && b.as_bool();
+  }
+
+  error() << "Unexpected operand type: " << a.getType()
+          << " and " << b.getType() << "\n";
+  return Value(ValueType::Error);
+}
+
+Value VirtualMachine::logical_or(const Value& a, const Value& b) {
+  if (a.is(ValueType::Bool) && b.is(ValueType::Bool)) {
+    return a.as_bool() || b.as_bool();
+  }
+
+  error() << "Unexpected operand type: " << a.getType()
+          << " or " << b.getType() << "\n";
+  return Value(ValueType::Error);
+}
+
+Value VirtualMachine::logical_equals(const Value& a, const Value& b) {
+  if (a.is(ValueType::Bool) && b.is(ValueType::Bool)) {
+    return a.as_bool() == b.as_bool();
+  } else if (a.is(ValueType::Number) && b.is(ValueType::Number)) {
+    return a.as_number() == b.as_number();
+  }
+
+  error() << "Unexpected operand type: " << a.getType()
+          << " == " << b.getType() << "\n";
+  return Value(ValueType::Error);
+}
+
+Value VirtualMachine::logical_greater(const Value& a, const Value& b) {
+  if (a.is(ValueType::Number) && b.is(ValueType::Number)) {
+    return a.as_number() > b.as_number();
+  }
+
+  error() << "Unexpected operand type: " << a.getType()
+          << " > " << b.getType() << "\n";
+  return Value(ValueType::Error);
+}
+
+Value VirtualMachine::logical_less(const Value& a, const Value& b) {
+  if (a.is(ValueType::Number) && b.is(ValueType::Number)) {
+    return a.as_number() < b.as_number();
+  }
+
+  error() << "Unexpected operand type: " << a.getType()
+          << " > " << b.getType() << "\n";
   return Value(ValueType::Error);
 }
 
@@ -209,6 +282,42 @@ Value VirtualMachine::execute(const Bytecode* code) {
 
         break;
       }
+      case Not: {
+        Value a = pop();
+        push(logical_not(a));
+        break;
+      }
+      case And: {
+        Value b = pop();
+        Value a = pop();
+        push(logical_and(a, b));
+        break;
+      }
+      case Or: {
+        Value b = pop();
+        Value a = pop();
+        push(logical_or(a, b));
+        break;
+      }
+      case Equal: {
+        Value b = pop();
+        Value a = pop();
+        push(logical_equals(a, b));
+        break;
+      }
+      case Greater: {
+        Value b = pop();
+        Value a = pop();
+        push(logical_greater(a, b));
+        break;
+      }
+      case Less: {
+        Value b = pop();
+        Value a = pop();
+        push(logical_less(a, b));
+        break;
+      }
+      default: error() << "Unexpected op: " << (std::size_t) op << "\n";
     }
   }
 

@@ -34,12 +34,22 @@ public:
   enum Instruction : std::uint8_t {
     Return,
     Constant16,
+
+    // Arithmetic
     Negate,
     Add,
     Subtract,
     Multiply,
     Exp,
-    Divide
+    Divide,
+
+    // Logical
+    Not,
+    And,
+    Or,
+    Equal,
+    Greater,
+    Less
   };
 
   VirtualMachine();
@@ -51,6 +61,14 @@ public:
   Value mul(const Value& a, const Value& b);
   Value div(const Value& a, const Value& b);
   Value exp(const Value& a, const Value& b);
+
+  Value logical_not(const Value& a);
+  Value logical_and(const Value& a, const Value& b);
+  Value logical_or(const Value& a, const Value& b);
+
+  Value logical_equals(const Value& a, const Value& b);
+  Value logical_greater(const Value& a, const Value& b);
+  Value logical_less(const Value& a, const Value& b);
 
   Value execute(const Bytecode* code);
 
