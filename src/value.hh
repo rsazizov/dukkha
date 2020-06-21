@@ -10,6 +10,7 @@ enum class ValueType : std::uint8_t {
   Symbol,
   Object,
   String,
+  Null,
 
   // Used internally.
   Error
@@ -19,7 +20,7 @@ std::ostream& operator <<(std::ostream& os, ValueType type);
 
 class Value {
 public:
-  Value(ValueType type);
+  Value(ValueType type = ValueType::Null);
   Value(double value);
   Value(bool value);
   Value(const char* str);

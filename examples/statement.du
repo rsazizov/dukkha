@@ -1,4 +1,8 @@
-print('I have my own programming languagae now!!!');
-print('It is pretty shit, but I love it');
+const greeting = 'Hello, ';
+const name1 = 'Adam';
+const name2 = 'Eve';
+const nobody;
 
-
+print(greeting + name1);
+print(greeting + name2);
+print(nobody);

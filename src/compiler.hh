@@ -17,6 +17,9 @@ public:
 private:
   bool compile();
 
+  void declaration();
+  void variable_declaration();
+
   void statement();
   void print();
 

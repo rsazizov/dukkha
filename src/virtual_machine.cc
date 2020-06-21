@@ -1,6 +1,7 @@
 #include "virtual_machine.hh"
 #include "value.hh"
 
+#include <bits/c++config.h>
 #include <cstdlib>
 #include <iomanip>
 #include <cmath>
@@ -67,8 +68,15 @@ void Bytecode::dump_text() {
       case VirtualMachine::Exp: std::cout << "exp\n"; break;
       case VirtualMachine::Print: std::cout << "cout\n"; break;
       case VirtualMachine::Return: std::cout << "ret\n"; break;
+
+      case VirtualMachine::Store:
+        std::cout << "st $" << (std::size_t) m_code[++i] << "\n";
+        break;
+      case VirtualMachine::Load:
+        std::cout << "load $" << (std::size_t) m_code[++i] << "\n";
+        break;
       case VirtualMachine::Constant16:
-        std::cout << "push $" << (int) m_code[++i] << "\n";
+        std::cout << "push $" << (std::size_t) m_code[++i] << "\n";
         break;
     }
   }
@@ -227,6 +235,15 @@ Value VirtualMachine::logical_less(const Value& a, const Value& b) {
   return Value(ValueType::Error);
 }
 
+void VirtualMachine::store_global(const Value& name, const Value& value) {
+  if (!name.is(ValueType::String)) {
+    error() << "Unexpected global name type: " << name.getType() << "\n";
+    return;
+  }
+
+  m_globals[name.as_string()] = value;
+}
+
 Value VirtualMachine::execute(const Bytecode* code) {
   m_code = code;
   m_ip = code->get_code().data();
@@ -321,6 +338,19 @@ Value VirtualMachine::execute(const Bytecode* code) {
       case Print: {
         Value a = pop();
         std::cout << a << "\n";
+        break;
+      }
+      case Store: {
+        Value value = pop();
+        Value name = pop();
+
+        store_global(name, value);
+        break;
+      }
+      case Load: {
+        Value name = read_const();
+        const Value& value = m_globals[name.as_string()];
+        push(value);
         break;
       }
       default: error() << "Unexpected op: " << (std::size_t) op << "\n";

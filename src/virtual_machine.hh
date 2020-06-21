@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <vector>
 #include <ostream>
+#include <unordered_map>
 
 #include "value.hh"
 
@@ -51,7 +53,9 @@ public:
     Greater,
     Less,
 
-    Print
+    Print,
+    Store,
+    Load
   };
 
   VirtualMachine();
@@ -72,6 +76,8 @@ public:
   Value logical_greater(const Value& a, const Value& b);
   Value logical_less(const Value& a, const Value& b);
 
+  void store_global(const Value& name, const Value& value);
+
   Value execute(const Bytecode* code);
 
   void halt();
@@ -83,6 +89,7 @@ private:
   void error(const char* msg);
 
   bool m_halt = false;
+  std::unordered_map<std::string, Value> m_globals;
 
   const Bytecode* m_code { nullptr };
   const std::uint8_t* m_ip { nullptr };

@@ -27,12 +27,44 @@ bool Compiler::compile() {
   m_had_error = false;
 
   while (m_cursor.type != TokenType::EndOfFile) {
-    statement();
+    declaration();
   }
 
   emit(VirtualMachine::Return);
 
   return !m_had_error;
+}
+
+void Compiler::declaration() {
+  if (m_cursor.type == TokenType::Const) {
+    advance();
+    variable_declaration();
+  } else {
+    statement();
+  }
+}
+
+void Compiler::variable_declaration() {
+  if (m_prev.type == TokenType::Const) {
+    consume(TokenType::Identifer, "variable name expeceted");
+
+    Value name = Value(m_prev.as_string);
+    std::size_t pname = m_code.push_const(name);
+
+    emit(VirtualMachine::Constant16);
+    emit(pname);
+
+    if (m_cursor.type == TokenType::Eq) {
+      advance();
+      expression();
+    } else {
+      emit(VirtualMachine::Constant16);
+      emit(m_code.push_const(Value()));
+    }
+
+    consume(TokenType::Semicolon, "';' expeceted");
+    emit(VirtualMachine::Store);
+  }
 }
 
 void Compiler::expression() {
@@ -224,6 +256,13 @@ void Compiler::arbitrary() {
       std::size_t pa = m_code.push_const(false);
       emit(VirtualMachine::Constant16);
       emit(pa);
+      advance();
+      break;
+    }
+    case TokenType::Identifer: {
+      std::size_t pname = m_code.push_const(m_cursor.as_string);
+      emit(VirtualMachine::Load);
+      emit(pname);
       advance();
       break;
     }

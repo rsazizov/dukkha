@@ -13,8 +13,8 @@ Each instruction is 1 byte long. However, some instructions may have different v
 | Instruction | Operands | Description                                                       |
 |-------------|----------|-------------------------------------------------------------------|
 | Return      | None     | Halt                                                              |
-| Constant16  | A        | Load a constant at address A                                      |
-| Constant32  | AB       | Load a constant at address AB                                     |
+| Constant16  | A        | Load a constant at $A                                             |
+| Constant32  | AB       | Load a constant at $AB                                            |
 | Negate      | None     | Calculate -pop(S) and push it on top of the stack                 |
 | Add         | None     | Calculate pop(S) + pop(S) and push it on top of the stack         |
 | Subtract    | None     | Calculate pop(S) - pop(S) and push it on top of the stack         |
@@ -24,13 +24,20 @@ Each instruction is 1 byte long. However, some instructions may have different v
 | Not         | None     | Calculate logical ~pop(S) and push it on top of the stack         |
 | Greater     | None     | Calculate logical pop(S) > pop(S) and push it on top of the stack |
 | Less        | None     | Calculate logical pop(S) < pop(S) and push it on top of the stack |
+| Store       | None     | Store value pop(S) as a global named pop(S)                       |
+| Load        | A        | Load a global value $A and push it on top of the stack            |
 
 ### Grammar
 
 Below is BNF representation of the language (for now, I'll add more rules as I go).
 
 ```
-<program> := <statement>+ EOF;
+<program> := <declaration>+ EOF;
+
+<declaration> := <variable_declaration> |
+                 <statement>;
+
+<variable_declaration> := "const" <identifier> ("=" <expression>)? ";";
 
 <statement> := <print> | <expression> ";";
 <print> := "print" <expression> ";";
@@ -47,7 +54,7 @@ Below is BNF representation of the language (for now, I'll add more rules as I g
 <unary> := "-" <exp> | <exp>;
 <exp> := <arbitrary> ("**" <arbitrary>)+;
 
-<arbitrary> := <number> | "(" <expression> ")" | "true | "false";
+<arbitrary> := <number> | "(" <expression> ")" | "true | "false" | <identifier>;
 
 <comparison_op> := "==" | "!=" | ">=" | "<=" | ">" | "<";
 ```
