@@ -1,8 +1,6 @@
-const greeting = 'Hello, ';
-const name1 = 'Adam';
-const name2 = 'Eve';
-const nobody;
+let a = 10;
+let b = 5;
 
-print(greeting + name1);
-print(greeting + name2);
-print(nobody);
+let a;
+
+print(a);

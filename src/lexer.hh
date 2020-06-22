@@ -13,8 +13,7 @@ enum class TokenType {
   MinusEq, StarEq, PlusEq, SlashEq, EqEq, StarStar, LessEq, GreaterEq, BangEq,
 
   // Keywords
-  Function, Return, Let, Const, For, While, If, Else, And, Or, Not, True, False,
-  Print,
+  Function, Return, Let, For, While, If, Else, And, Or, Not, True, False, Print,
 
   // Literals
   NumberLiteral, StringLiteral, Null,

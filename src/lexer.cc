@@ -49,7 +49,6 @@ std::ostream& operator <<(std::ostream& os, TokenType type) {
     TT_CASE(os, Function)
     TT_CASE(os, Return)
     TT_CASE(os, Let)
-    TT_CASE(os, Const)
     TT_CASE(os, For)
     TT_CASE(os, While)
     TT_CASE(os, If)
@@ -183,7 +182,6 @@ Token Lexer::keyword_or_identifer() {
       break;
     case 'l': return keyword(1, 2, "et", TokenType::Let);
     case 'i': return keyword(1, 1, "f", TokenType::If);
-    case 'c': return keyword(1, 4, "onst", TokenType::Const);
     case 'p': return keyword(1, 4, "rint", TokenType::Print);
     case 'w': return keyword(1, 4, "hile", TokenType::While);
     case 'e': return keyword(1, 3, "lse", TokenType::Else);
@@ -207,7 +205,7 @@ Token Lexer::keyword(std::size_t start, std::size_t len,
       std::strlen(str));
 
   char after = *(m_cursor + start + len);
-  std::cout << after << "\n";
+
   if (match && !std::isalpha(after) && !std::isdigit(after) && after != '_') {
     Token token = make_token(type);
     m_cursor += start + len - 1;

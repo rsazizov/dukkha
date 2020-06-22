@@ -37,7 +37,7 @@ Below is BNF representation of the language (for now, I'll add more rules as I g
 <declaration> := <variable_declaration> |
                  <statement>;
 
-<variable_declaration> := "const" <identifier> ("=" <expression>)? ";";
+<variable_declaration> := "let" <identifier> ("=" <expression>)? ";";
 
 <statement> := <print> | <expression> ";";
 <print> := "print" <expression> ";";

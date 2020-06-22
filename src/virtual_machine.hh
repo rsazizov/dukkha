@@ -54,8 +54,12 @@ public:
     Less,
 
     Print,
-    Store,
-    Load
+
+    LoadNull,
+
+    AllocGlobal,
+    StoreGlobal,
+    LoadGlobal
   };
 
   VirtualMachine();
@@ -76,7 +80,9 @@ public:
   Value logical_greater(const Value& a, const Value& b);
   Value logical_less(const Value& a, const Value& b);
 
+  void alloc_global(const Value& name);
   void store_global(const Value& name, const Value& value);
+  void load_global(const Value& name);
 
   Value execute(const Bytecode* code);
 

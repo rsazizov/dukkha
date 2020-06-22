@@ -66,14 +66,19 @@ void Bytecode::dump_text() {
       case VirtualMachine::Greater: std::cout << "gt\n"; break;
       case VirtualMachine::Less: std::cout << "lt\n"; break;
       case VirtualMachine::Exp: std::cout << "exp\n"; break;
+      case VirtualMachine::LoadNull: std::cout << "lnull\n"; break;
       case VirtualMachine::Print: std::cout << "cout\n"; break;
       case VirtualMachine::Return: std::cout << "ret\n"; break;
 
-      case VirtualMachine::Store:
-        std::cout << "st $" << (std::size_t) m_code[++i] << "\n";
+      case VirtualMachine::AllocGlobal:
+        std::cout << "alcg $" << (std::size_t) m_code[++i] << "\n";
         break;
-      case VirtualMachine::Load:
-        std::cout << "load $" << (std::size_t) m_code[++i] << "\n";
+
+      case VirtualMachine::StoreGlobal:
+        std::cout << "stg $" << (std::size_t) m_code[++i] << "\n";
+        break;
+      case VirtualMachine::LoadGlobal:
+        std::cout << "loadg $" << (std::size_t) m_code[++i] << "\n";
         break;
       case VirtualMachine::Constant16:
         std::cout << "push $" << (std::size_t) m_code[++i] << "\n";
@@ -235,13 +240,49 @@ Value VirtualMachine::logical_less(const Value& a, const Value& b) {
   return Value(ValueType::Error);
 }
 
+
+void VirtualMachine::alloc_global(const Value& name) {
+  auto global = m_globals.find(name.as_string());
+
+  if (global != m_globals.end()) {
+    error() << "Name '" << name << "' has already been defined" << ".\n";
+    return;
+  }
+
+  m_globals[name.as_string()] = Value();
+}
+
 void VirtualMachine::store_global(const Value& name, const Value& value) {
   if (!name.is(ValueType::String)) {
     error() << "Unexpected global name type: " << name.getType() << "\n";
     return;
   }
 
-  m_globals[name.as_string()] = value;
+  auto global = m_globals.find(name.as_string());
+
+  if (global == m_globals.end()) {
+    error() << "Name '" << name << "' is not known" << ".\n";
+    return;
+  }
+
+  global->second = value;
+}
+
+
+void VirtualMachine::load_global(const Value& name) {
+  if (!name.is(ValueType::String)) {
+    error() << "Unexpected global name type: " << name.getType() << ".\n";
+    return;
+  }
+
+  auto global = m_globals.find(name.as_string());
+
+  if (global == m_globals.end()) {
+    error() << "Name '" << name << "' is not known" << ".\n";
+    return;
+  }
+
+  push(global->second);
 }
 
 Value VirtualMachine::execute(const Bytecode* code) {
@@ -260,7 +301,7 @@ Value VirtualMachine::execute(const Bytecode* code) {
         return true;
       case Constant16: {
         Value value = read_const();
-        m_stack.push_back(value);
+        push(value);
         break;
       }
       case Negate:
@@ -340,17 +381,25 @@ Value VirtualMachine::execute(const Bytecode* code) {
         std::cout << a << "\n";
         break;
       }
-      case Store: {
+      case LoadNull: {
+        push(Value());
+        break;
+      }
+      case AllocGlobal: {
+        Value name = read_const();
+        alloc_global(name);
+        break;
+      }
+      case StoreGlobal: {
         Value value = pop();
         Value name = pop();
 
         store_global(name, value);
         break;
       }
-      case Load: {
+      case LoadGlobal: {
         Value name = read_const();
-        const Value& value = m_globals[name.as_string()];
-        push(value);
+        load_global(name);
         break;
       }
       default: error() << "Unexpected op: " << (std::size_t) op << "\n";

@@ -36,7 +36,7 @@ bool Compiler::compile() {
 }
 
 void Compiler::declaration() {
-  if (m_cursor.type == TokenType::Const) {
+  if (m_cursor.type == TokenType::Let) {
     advance();
     variable_declaration();
   } else {
@@ -45,11 +45,14 @@ void Compiler::declaration() {
 }
 
 void Compiler::variable_declaration() {
-  if (m_prev.type == TokenType::Const) {
+  if (m_prev.type == TokenType::Let) {
     consume(TokenType::Identifer, "variable name expeceted");
 
     Value name = Value(m_prev.as_string);
     std::size_t pname = m_code.push_const(name);
+
+    emit(VirtualMachine::AllocGlobal);
+    emit(pname);
 
     emit(VirtualMachine::Constant16);
     emit(pname);
@@ -58,12 +61,12 @@ void Compiler::variable_declaration() {
       advance();
       expression();
     } else {
-      emit(VirtualMachine::Constant16);
-      emit(m_code.push_const(Value()));
+      emit(VirtualMachine::LoadNull);
     }
 
+    emit(VirtualMachine::StoreGlobal);
+
     consume(TokenType::Semicolon, "';' expeceted");
-    emit(VirtualMachine::Store);
   }
 }
 
@@ -261,7 +264,7 @@ void Compiler::arbitrary() {
     }
     case TokenType::Identifer: {
       std::size_t pname = m_code.push_const(m_cursor.as_string);
-      emit(VirtualMachine::Load);
+      emit(VirtualMachine::LoadGlobal);
       emit(pname);
       advance();
       break;
