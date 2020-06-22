@@ -1,12 +1,10 @@
 #include "lexer.hh"
 
-#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <cstring>
 #include <sstream>
 #include <cmath>
-#include <unordered_map>
 
 char* strdup(const char* str) {
   char* dup = new char[std::strlen(str) + 1];
@@ -18,49 +16,64 @@ char* strdup(const char* str) {
 Token::~Token() {
 }
 
-#define PAIR(T) {T, #T}
+#define TT_CASE(os, x) case TokenType::x: os << #x; break;
 
 std::ostream& operator <<(std::ostream& os, TokenType type) {
-  os << std::unordered_map<TokenType, const char*> {
-    PAIR(TokenType::LeftCurly),
-    PAIR(TokenType::RightCurly),
-    PAIR(TokenType::LeftSquare),
-    PAIR(TokenType::RightSquare),
-    PAIR(TokenType::LeftRound),
-    PAIR(TokenType::RightRound),
-    PAIR(TokenType::Semicolon),
-    PAIR(TokenType::Dot),
-    PAIR(TokenType::Comma),
-    PAIR(TokenType::Minus),
-    PAIR(TokenType::Star),
-    PAIR(TokenType::Plus),
-    PAIR(TokenType::Slash),
-    PAIR(TokenType::Eq),
-    PAIR(TokenType::MinusEq),
-    PAIR(TokenType::StarEq),
-    PAIR(TokenType::PlusEq),
-    PAIR(TokenType::SlashEq),
-    PAIR(TokenType::EqEq),
-    PAIR(TokenType::True),
-    PAIR(TokenType::False),
-    PAIR(TokenType::StarStar),
-    PAIR(TokenType::Function),
-    PAIR(TokenType::Return),
-    PAIR(TokenType::Let),
-    PAIR(TokenType::Const),
-    PAIR(TokenType::For),
-    PAIR(TokenType::While),
-    PAIR(TokenType::If),
-    PAIR(TokenType::Else),
-    PAIR(TokenType::NumberLiteral),
-    PAIR(TokenType::StringLiteral),
-    PAIR(TokenType::Identifer),
-    PAIR(TokenType::Error),
-    PAIR(TokenType::EndOfFile),
-  }[type];
+  switch (type) {
+    TT_CASE(os, LeftCurly)
+    TT_CASE(os, RightCurly)
+    TT_CASE(os, LeftSquare)
+    TT_CASE(os, RightSquare)
+    TT_CASE(os, LeftRound)
+    TT_CASE(os, RightRound)
+    TT_CASE(os, Semicolon)
+    TT_CASE(os, Dot)
+    TT_CASE(os, Comma)
+    TT_CASE(os, Minus)
+    TT_CASE(os, Star)
+    TT_CASE(os, Plus)
+    TT_CASE(os, Slash)
+    TT_CASE(os, Eq)
+    TT_CASE(os, Less)
+    TT_CASE(os, Greater)
+    TT_CASE(os, Bang)
+    TT_CASE(os, MinusEq)
+    TT_CASE(os, StarEq)
+    TT_CASE(os, PlusEq)
+    TT_CASE(os, SlashEq)
+    TT_CASE(os, EqEq)
+    TT_CASE(os, StarStar)
+    TT_CASE(os, LessEq)
+    TT_CASE(os, GreaterEq)
+    TT_CASE(os, BangEq)
+    TT_CASE(os, Function)
+    TT_CASE(os, Return)
+    TT_CASE(os, Let)
+    TT_CASE(os, Const)
+    TT_CASE(os, For)
+    TT_CASE(os, While)
+    TT_CASE(os, If)
+    TT_CASE(os, Else)
+    TT_CASE(os, And)
+    TT_CASE(os, Or)
+    TT_CASE(os, Not)
+    TT_CASE(os, True)
+    TT_CASE(os, False)
+    TT_CASE(os, Print)
+    TT_CASE(os, NumberLiteral)
+    TT_CASE(os, StringLiteral)
+    TT_CASE(os, Null)
+    TT_CASE(os, Identifer)
+    TT_CASE(os, Error)
+    TT_CASE(os, EndOfFile)
+    default:
+      os << "<error>";
+  }
 
   return os;
 }
+
+#undef TT_CASE
 
 Lexer::Lexer() {
 }
@@ -194,7 +207,8 @@ Token Lexer::keyword(std::size_t start, std::size_t len,
       std::strlen(str));
 
   char after = *(m_cursor + start + len);
-  if (match && !std::isalpha(after) && !std::isdigit(after)) {
+  std::cout << after << "\n";
+  if (match && !std::isalpha(after) && !std::isdigit(after) && after != '_') {
     Token token = make_token(type);
     m_cursor += start + len - 1;
     m_position += start + len - 1;
@@ -211,7 +225,7 @@ Token Lexer::identifer() {
   char name[MAX_IDENTIFIER_LEN];
   size_t size = 0;
 
-  while (std::isalpha(*m_cursor) || std::isdigit(*m_cursor)) {
+  while (std::isalpha(*m_cursor) || std::isdigit(*m_cursor) || *m_cursor == '_') {
     name[size++] = *m_cursor++;
   }
 
