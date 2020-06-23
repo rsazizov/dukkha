@@ -36,6 +36,7 @@ public:
   enum Instruction : std::uint8_t {
     Return,
     Constant16,
+    Pop,
 
     // Arithmetic
     Negate,
@@ -59,7 +60,10 @@ public:
 
     AllocGlobal,
     StoreGlobal,
-    LoadGlobal
+    LoadGlobal,
+
+    StoreLocal,
+    LoadLocal
   };
 
   VirtualMachine();

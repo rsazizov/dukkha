@@ -25,6 +25,7 @@ bool Compiler::from_file(const char* path, Bytecode& bytecode) {
 
 bool Compiler::compile() {
   m_had_error = false;
+  m_block_depth = 0;
 
   while (m_cursor.type != TokenType::EndOfFile) {
     declaration();
@@ -39,35 +40,69 @@ void Compiler::declaration() {
   if (m_cursor.type == TokenType::Let) {
     advance();
     variable_declaration();
+  } else if (m_cursor.type == TokenType::LeftCurly) {
+    advance();
+    block();
   } else {
     statement();
   }
 }
 
+void Compiler::block() {
+  enter_block();
+
+  while (m_cursor.type != TokenType::RightCurly &&
+         m_cursor.type != TokenType::EndOfFile)  {
+    declaration();
+  }
+
+  consume(TokenType::RightCurly, "'}' expected");
+  leave_block();
+}
+
 void Compiler::variable_declaration() {
-  if (m_prev.type == TokenType::Let) {
-    consume(TokenType::Identifer, "variable name expeceted");
+  consume(TokenType::Identifer, "variable name expeceted");
 
-    Value name = Value(m_prev.as_string);
-    std::size_t pname = m_code.push_const(name);
+  bool global_scope = m_block_depth == 0;
 
+  Value name = Value(m_prev.as_string);
+  std::size_t pname = 0;
+
+  if (global_scope) {
+    pname = m_code.push_const(name);
     emit(VirtualMachine::AllocGlobal);
     emit(pname);
-
-    emit(VirtualMachine::Constant16);
-    emit(pname);
-
-    if (m_cursor.type == TokenType::Eq) {
-      advance();
-      expression();
-    } else {
-      emit(VirtualMachine::LoadNull);
+  } else {
+    for (const auto& local : m_locals) {
+      if (local.depth == m_block_depth && local.name == name.as_string()) {
+        // TODO: error() <<
+        error(m_prev, "Redefinition of a local variable");
+      }
     }
-
-    emit(VirtualMachine::StoreGlobal);
-
-    consume(TokenType::Semicolon, "';' expeceted");
   }
+
+  if (m_cursor.type == TokenType::Eq) {
+    advance();
+    expression();
+  } else {
+    emit(VirtualMachine::LoadNull);
+  }
+
+  if (global_scope) {
+    emit(VirtualMachine::StoreGlobal);
+    emit(pname);
+  } else {
+    emit(VirtualMachine::StoreLocal);
+    emit(m_locals.size());
+
+    m_locals.push_back((LocalVar) {
+        .depth = m_block_depth,
+        .stack_offset = m_locals.size(),
+        .name = name.as_string()
+        });
+  }
+
+  consume(TokenType::Semicolon, "';' expeceted");
 }
 
 void Compiler::expression() {
@@ -263,15 +298,41 @@ void Compiler::arbitrary() {
       break;
     }
     case TokenType::Identifer: {
-      std::size_t pname = m_code.push_const(m_cursor.as_string);
-      emit(VirtualMachine::LoadGlobal);
-      emit(pname);
+      resolve_variable(m_cursor.as_string);
       advance();
       break;
     }
     default:
       error(m_cursor, "invalid syntax");
   }
+}
+
+void Compiler::enter_block() {
+  m_block_depth++;
+}
+
+void Compiler::leave_block() {
+  while (!m_locals.empty() && m_locals.back().depth == m_block_depth) {
+    m_locals.pop_back();
+    emit(VirtualMachine::Pop);
+  }
+
+  m_block_depth--;
+}
+
+void Compiler::resolve_variable(const std::string& name) {
+  for (auto local = m_locals.rbegin(); local != m_locals.rend(); ++local) {
+    if (local->name == name && local->depth <= m_block_depth) {
+      emit(VirtualMachine::LoadLocal);
+      emit(local->stack_offset);
+
+      return;
+    }
+  }
+
+  std::size_t pname = m_code.push_const(name);
+  emit(VirtualMachine::LoadGlobal);
+  emit(pname);
 }
 
 void Compiler::advance() {
@@ -284,6 +345,7 @@ void Compiler::consume(TokenType type, const char* msg) {
     advance();
   } else {
     error(m_cursor, msg);
+    advance();
   }
 }
 

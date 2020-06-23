@@ -68,17 +68,23 @@ void Bytecode::dump_text() {
       case VirtualMachine::Exp: std::cout << "exp\n"; break;
       case VirtualMachine::LoadNull: std::cout << "lnull\n"; break;
       case VirtualMachine::Print: std::cout << "cout\n"; break;
+      case VirtualMachine::Pop: std::cout << "pop\n"; break;
       case VirtualMachine::Return: std::cout << "ret\n"; break;
 
       case VirtualMachine::AllocGlobal:
         std::cout << "alcg $" << (std::size_t) m_code[++i] << "\n";
         break;
-
       case VirtualMachine::StoreGlobal:
         std::cout << "stg $" << (std::size_t) m_code[++i] << "\n";
         break;
       case VirtualMachine::LoadGlobal:
         std::cout << "loadg $" << (std::size_t) m_code[++i] << "\n";
+        break;
+      case VirtualMachine::StoreLocal:
+        std::cout << "stl %" << (std::size_t) m_code[++i] << "\n";
+        break;
+      case VirtualMachine::LoadLocal:
+        std::cout << "loadl %" << (std::size_t) m_code[++i] << "\n";
         break;
       case VirtualMachine::Constant16:
         std::cout << "push $" << (std::size_t) m_code[++i] << "\n";
@@ -304,6 +310,10 @@ Value VirtualMachine::execute(const Bytecode* code) {
         push(value);
         break;
       }
+      case Pop: {
+        pop();
+        break;
+      }
       case Negate:
         push(neg(pop())); break;
       case Add: {
@@ -392,7 +402,7 @@ Value VirtualMachine::execute(const Bytecode* code) {
       }
       case StoreGlobal: {
         Value value = pop();
-        Value name = pop();
+        Value name = read_const();
 
         store_global(name, value);
         break;
@@ -400,6 +410,16 @@ Value VirtualMachine::execute(const Bytecode* code) {
       case LoadGlobal: {
         Value name = read_const();
         load_global(name);
+        break;
+      }
+      case StoreLocal: {
+        auto stack_offset = *m_ip++;
+        m_stack[stack_offset] = m_stack.back();
+        break;
+      }
+      case LoadLocal: {
+        auto stack_offset = *m_ip++;
+        push(m_stack[stack_offset]);
         break;
       }
       default: error() << "Unexpected op: " << (std::size_t) op << "\n";
