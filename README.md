@@ -4,18 +4,30 @@ Dukkha is a toy programming language and a corresponding implementation in C++ (
 
 ## Features
 
-Source code is compiled into bytecode that is executed by a virtual machine.
+- [x] Expressions
+- [x] Global variables
+- [ ] Local variables
+- [ ] if-else
+- [ ] for, while
+- [ ] Python-ish data model
+- [ ] Symbols
+- [ ] Closure
+- [ ] Garbage collection
+- [ ] Modules
 
-### Virtual Machine
+## Virtual Machine
 
-Each instruction is 1 byte long. However, some instructions may have different variants depending on the size of the operand (e.g `Constant16`/`Constant32`). A table describing each instruction is presented below (S refers to the stack).
+Compiled programs have `.rodata` (`Bytecode::m_consts`) and `.text` (`Bytecode::m_code`)
+sections for constants and instructions respectively. Dukkha programs run on a stack based 16 bit
+(for now) virtual machine. Below you can find the instruction set for the vm. S refers to the stack and pop(S)'s
+should be read from right to left.  Also, `$A` refers to a value at address A defined in `.rodata` section of a compiled program
+and `%A` referes to a value on a stack with offset A (from the bottom of the stack);
 
 | Instruction | Operands | Description                                                       |
 |-------------|----------|-------------------------------------------------------------------|
 | Return      | None     | Halt                                                              |
 | Constant16  | A        | Load a constant at $A                                             |
-| Constant32  | AB       | Load a constant at $AB                                            |
-| Pop         |          | pop(S)                                                            |
+| Pop         | None     | pop(S)                                                            |
 | Negate      | None     | Calculate -pop(S) and push it on top of the stack                 |
 | Add         | None     | Calculate pop(S) + pop(S) and push it on top of the stack         |
 | Subtract    | None     | Calculate pop(S) - pop(S) and push it on top of the stack         |
@@ -30,7 +42,41 @@ Each instruction is 1 byte long. However, some instructions may have different v
 | StoreLocal  | A        | Store pop(S) at %A                                                |
 | LoadLocal   | A        | Load a value %A and push it on top of the stack                   |
 
-### Grammar
+Here is an example of a program and its compiled bytecode:
+
+```javascript
+let answer = '42';
+let message = 'The answer is';
+
+print(message + ' ' + answer);
+```
+
+```
+.rodata:
+$00000 answer
+$00001 42
+$00002 message
+$00003 The answer is
+$00004 message
+$00005
+$00006 answer
+.text:
+$00000:001 alcg $0
+$00002:001 push $1
+$00004:001 stg $0
+$00006:002 alcg $2
+$00008:002 push $3
+$00010:002 stg $2
+$00012:004 loadg $4
+$00014:004 push $5
+$00016:004 add
+$00017:004 loadg $6
+$00019:004 add
+$00020:004 cout
+$00021:004 ret
+```
+
+## Grammar
 
 Below is BNF representation of the language (for now, I'll add more rules as I go).
 
