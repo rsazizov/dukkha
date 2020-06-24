@@ -7,8 +7,8 @@ Dukkha is a toy programming language and a corresponding implementation in C++ (
 - [x] Expressions
 - [x] Global variables
 - [x] Local variables
-- [x] if-else
-- [ ] for, while
+- [x] if-else if-else
+- [x] while-else
 - [ ] Python-ish data model
 - [ ] Symbols
 - [ ] Closure
@@ -95,6 +95,7 @@ Below is BNF representation of the language (for now, I'll add more rules as I g
 <statement> := <print_statement> |
                <variable_assignment> |
                <if_statement> |
+               <while_statement> |
                <expression> ";";
 
 <variable_assignment> := <identifier> "=" <expression> ";";
