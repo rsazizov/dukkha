@@ -79,7 +79,8 @@ private:
   void advance();
   void consume(TokenType type, const char* msg);
 
-  std::size_t emit(std::uint8_t byte);
+  std::size_t emit_byte(std::uint8_t byte);
+  std::size_t emit_qword(std::size_t qword);
 
   Bytecode m_code {};
 

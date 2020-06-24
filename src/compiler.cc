@@ -32,7 +32,7 @@ bool Compiler::compile() {
     declaration();
   }
 
-  emit(VirtualMachine::Return);
+  emit_byte(VirtualMachine::Return);
 
   return !m_had_error;
 }
@@ -71,8 +71,8 @@ void Compiler::variable_declaration() {
 
   if (global_scope) {
     pname = resolve_string(name.as_string());
-    emit(VirtualMachine::AllocGlobal);
-    emit(pname);
+    emit_byte(VirtualMachine::AllocGlobal);
+    emit_byte(pname);
   } else {
     for (const auto& local : m_locals) {
       if (local.depth == m_block_depth && local.name == name.as_string()) {
@@ -85,15 +85,15 @@ void Compiler::variable_declaration() {
     advance();
     expression();
   } else {
-    emit(VirtualMachine::LoadNull);
+    emit_byte(VirtualMachine::LoadNull);
   }
 
   if (global_scope) {
-    emit(VirtualMachine::StoreGlobal);
-    emit(pname);
+    emit_byte(VirtualMachine::StoreGlobal);
+    emit_byte(pname);
   } else {
-    emit(VirtualMachine::StoreLocal);
-    emit(m_locals.size());
+    emit_byte(VirtualMachine::StoreLocal);
+    emit_byte(m_locals.size());
 
     m_locals.push_back((LocalVar) {
         .depth = m_block_depth,
@@ -138,13 +138,13 @@ void Compiler::variable_assignment() {
 
   consume(TokenType::Semicolon, "';' expected");
 
-  emit(VirtualMachine::StoreGlobal);
-  emit(pname);
+  emit_byte(VirtualMachine::StoreGlobal);
+  emit_byte(pname);
 }
 
 void Compiler::print() {
   expression();
-  emit(VirtualMachine::Print);
+  emit_byte(VirtualMachine::Print);
   consume(TokenType::Semicolon, "';' expected");
 }
 
@@ -155,15 +155,15 @@ void Compiler::if_statement() {
   std::vector<std::size_t> endif_jumps;
   std::size_t next_block_target = 0;
 
-  emit(VirtualMachine::JumpIfFalse);
-  next_block_target = emit(0);
+  emit_byte(VirtualMachine::JumpIfFalse);
+  next_block_target = emit_qword(0);
 
   block();
 
-  emit(VirtualMachine::Jump);
-  endif_jumps.push_back(emit(0));
+  emit_byte(VirtualMachine::Jump);
+  endif_jumps.push_back(emit_qword(0));
 
-  m_code.set_op(next_block_target, m_code.get_code().size());
+  m_code.set_qword(next_block_target, m_code.get_code().size());
 
   while (m_cursor.type == TokenType::Else) {
     advance();
@@ -173,16 +173,16 @@ void Compiler::if_statement() {
 
       expression();
 
-      emit(VirtualMachine::JumpIfFalse);
-      next_block_target = emit(0);
+      emit_byte(VirtualMachine::JumpIfFalse);
+      next_block_target = emit_qword(0);
 
       consume(TokenType::LeftCurly, "'{' expected");
       block();
 
-      emit(VirtualMachine::Jump);
-      endif_jumps.push_back(emit(0));
+      emit_byte(VirtualMachine::Jump);
+      endif_jumps.push_back(emit_qword(0));
 
-      m_code.set_op(next_block_target, m_code.get_code().size());
+      m_code.set_qword(next_block_target, m_code.get_code().size());
     } else {
       consume(TokenType::LeftCurly, "'{' expected");
       block();
@@ -191,7 +191,7 @@ void Compiler::if_statement() {
   }
 
   for (auto address : endif_jumps) {
-    m_code.set_op(address, m_code.get_code().size());
+    m_code.set_qword(address, m_code.get_code().size());
   }
 }
 
@@ -199,17 +199,17 @@ void Compiler::while_statement() {
   std::size_t eval_exp_address = m_code.get_code().size();
   expression();
 
-  emit(VirtualMachine::JumpIfFalse);
-  std::size_t block_end_addr = emit(0);
+  emit_byte(VirtualMachine::JumpIfFalse);
+  std::size_t block_end_addr = emit_qword(0);
 
   consume(TokenType::LeftCurly, "'{' expected");
 
   block();
 
-  emit(VirtualMachine::Jump);
-  emit(eval_exp_address);
+  emit_byte(VirtualMachine::Jump);
+  emit_qword(eval_exp_address);
 
-  m_code.set_op(block_end_addr, m_code.get_code().size());
+  m_code.set_qword(block_end_addr, m_code.get_code().size());
 
   if (m_cursor.type == TokenType::Else) {
     advance();
@@ -224,7 +224,7 @@ void Compiler::logical_or() {
   while (m_cursor.type == TokenType::Or) {
     advance();
     logical_and();
-    emit(VirtualMachine::Or);
+    emit_byte(VirtualMachine::Or);
   }
 }
 
@@ -234,14 +234,14 @@ void Compiler::logical_and() {
   while (m_cursor.type == TokenType::And) {
     advance();
     logical_not();
-    emit(VirtualMachine::And);
+    emit_byte(VirtualMachine::And);
   }
 }
 
 void Compiler::logical_not() {
   if (m_cursor.type == TokenType::Not) {
     comparison();
-    emit(VirtualMachine::Not);
+    emit_byte(VirtualMachine::Not);
   } else {
     comparison();
   }
@@ -272,25 +272,25 @@ void Compiler::comparison() {
 
     switch (op) {
       case TokenType::EqEq:
-        emit(VirtualMachine::Equal);
+        emit_byte(VirtualMachine::Equal);
         break;
       case TokenType::BangEq:
-        emit(VirtualMachine::Equal);
-        emit(VirtualMachine::Not);
+        emit_byte(VirtualMachine::Equal);
+        emit_byte(VirtualMachine::Not);
         break;
       case TokenType::GreaterEq:
-        emit(VirtualMachine::Less);
-        emit(VirtualMachine::Not);
+        emit_byte(VirtualMachine::Less);
+        emit_byte(VirtualMachine::Not);
         break;
       case TokenType::LessEq:
-        emit(VirtualMachine::Greater);
-        emit(VirtualMachine::Not);
+        emit_byte(VirtualMachine::Greater);
+        emit_byte(VirtualMachine::Not);
         break;
       case TokenType::Greater:
-        emit(VirtualMachine::Greater);
+        emit_byte(VirtualMachine::Greater);
         break;
       case TokenType::Less:
-        emit(VirtualMachine::Less);
+        emit_byte(VirtualMachine::Less);
         break;
       default: break;
     }
@@ -313,7 +313,7 @@ void Compiler::addition() {
     advance();
     multiplication();
 
-    emit(op);
+    emit_byte(op);
   }
 }
 
@@ -331,7 +331,7 @@ void Compiler::multiplication() {
 
     advance();
     unary();
-    emit(op);
+    emit_byte(op);
   }
 }
 
@@ -341,7 +341,7 @@ void Compiler::exp() {
   while (m_cursor.type == TokenType::StarStar) {
     advance();
     arbitrary();
-    emit(VirtualMachine::Exp);
+    emit_byte(VirtualMachine::Exp);
   }
 }
 
@@ -349,7 +349,7 @@ void Compiler::unary() {
   if (m_cursor.type == TokenType::Minus) {
     advance();
     exp();
-    emit(VirtualMachine::Negate);
+    emit_byte(VirtualMachine::Negate);
   } else {
     exp();
   }
@@ -359,8 +359,8 @@ void Compiler::arbitrary() {
   switch (m_cursor.type) {
     case TokenType::NumberLiteral: {
       std::size_t pa = m_code.push_const(m_cursor.as_number);
-      emit(VirtualMachine::Constant16);
-      emit(pa);
+      emit_byte(VirtualMachine::Constant16);
+      emit_byte(pa);
       advance();
       break;
     }
@@ -371,22 +371,22 @@ void Compiler::arbitrary() {
       break;
     case TokenType::StringLiteral: {
       std::size_t pa = resolve_string(m_cursor.as_string);
-      emit(VirtualMachine::Constant16);
-      emit(pa);
+      emit_byte(VirtualMachine::Constant16);
+      emit_byte(pa);
       advance();
       break;
     }
     case TokenType::True: {
       std::size_t pa = m_code.push_const(true);
-      emit(VirtualMachine::Constant16);
-      emit(pa);
+      emit_byte(VirtualMachine::Constant16);
+      emit_byte(pa);
       advance();
       break;
     }
     case TokenType::False: {
       std::size_t pa = m_code.push_const(false);
-      emit(VirtualMachine::Constant16);
-      emit(pa);
+      emit_byte(VirtualMachine::Constant16);
+      emit_byte(pa);
       advance();
       break;
     }
@@ -407,7 +407,7 @@ void Compiler::enter_block() {
 void Compiler::leave_block() {
   while (!m_locals.empty() && m_locals.back().depth == m_block_depth) {
     m_locals.pop_back();
-    emit(VirtualMachine::Pop);
+    emit_byte(VirtualMachine::Pop);
   }
 
   m_block_depth--;
@@ -416,16 +416,16 @@ void Compiler::leave_block() {
 void Compiler::resolve_variable(const std::string& name) {
   for (auto local = m_locals.rbegin(); local != m_locals.rend(); ++local) {
     if (local->name == name && local->depth <= m_block_depth) {
-      emit(VirtualMachine::LoadLocal);
-      emit(local->stack_offset);
+      emit_byte(VirtualMachine::LoadLocal);
+      emit_byte(local->stack_offset);
 
       return;
     }
   }
 
   std::size_t pname = resolve_string(name);
-  emit(VirtualMachine::LoadGlobal);
-  emit(pname);
+  emit_byte(VirtualMachine::LoadGlobal);
+  emit_byte(pname);
 }
 
 
@@ -455,8 +455,12 @@ void Compiler::consume(TokenType type, const char* msg) {
   }
 }
 
-std::size_t Compiler::emit(std::uint8_t byte) {
-  return m_code.push_op(byte, m_prev.line);
+std::size_t Compiler::emit_byte(std::uint8_t byte) {
+  return m_code.push_byte(byte, m_prev.line);
+}
+
+std::size_t Compiler::emit_qword(std::size_t qword) {
+  return m_code.push_qword(qword, m_prev.line);
 }
 
 void Compiler::error(const Token& at, const char* msg) {

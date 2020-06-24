@@ -8,6 +8,13 @@
 
 #include "value.hh"
 
+struct QwordToBytes {
+  union {
+    std::uint8_t bytes[8];
+    std::size_t qword;
+  };
+};
+
 class Bytecode {
 public:
   Bytecode() = default;
@@ -15,11 +22,16 @@ public:
 
   void clear();
 
-  std::size_t push_op(std::uint8_t op, std::size_t line);
+  std::size_t push_byte(std::uint8_t byte, std::size_t line);
+  // TODO: size_t -> std::uint64_t?
+  std::size_t push_qword(std::size_t qword, std::size_t line);
   std::size_t push_const(Value value);
 
-  void set_op(std::size_t address, std::uint8_t op);
-  std::uint8_t& get_op(std::size_t address);
+  void set_byte(std::size_t address, std::uint8_t byte);
+  void set_qword(std::size_t address, std::size_t qword);
+
+  std::uint8_t get_byte(std::size_t address);
+  std::size_t get_qword(std::size_t address);
 
   Value get_const(std::size_t address) const;
 

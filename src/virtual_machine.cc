@@ -15,13 +15,27 @@ void Bytecode::clear() {
   m_lines.clear();
 }
 
-// TODO: Sanity checks.
-
-std::size_t Bytecode::push_op(std::uint8_t op, std::size_t line) {
-  m_code.push_back(op);
+std::size_t Bytecode::push_byte(std::uint8_t byte, std::size_t line) {
+  m_code.push_back(byte);
   m_lines.push_back(line);
 
   return m_code.size() - 1;
+}
+
+std::size_t Bytecode::push_qword(std::size_t qword, std::size_t line) {
+
+  std::size_t address = m_code.size();
+
+  QwordToBytes qtb { .qword = qword };
+
+  for (auto byte : qtb.bytes) {
+    m_code.push_back(byte);
+    m_lines.push_back(line);
+  }
+
+  m_lines.push_back(line);
+
+  return address;
 }
 
 std::size_t Bytecode::push_const(Value value) {
@@ -29,12 +43,24 @@ std::size_t Bytecode::push_const(Value value) {
   return m_consts.size() - 1;
 }
 
-void Bytecode::set_op(std::size_t address, std::uint8_t op) {
-  m_code[address] = op;
+void Bytecode::set_byte(std::size_t address, std::uint8_t byte) {
+  m_code[address] = byte;
 }
 
-std::uint8_t& Bytecode::get_op(std::size_t address) {
+void Bytecode::set_qword(std::size_t address, std::size_t qword) {
+  QwordToBytes qtb { .qword = qword };
+  std::copy(qtb.bytes, qtb.bytes + 8, m_code.begin() + address);
+}
+
+std::uint8_t Bytecode::get_byte(std::size_t address) {
   return m_code[address];
+}
+
+std::size_t Bytecode::get_qword(std::size_t address) {
+  QwordToBytes qtb;
+  std::copy(m_code.begin() + address, m_code.begin() + address + 8, qtb.bytes);
+
+  return qtb.qword;
 }
 
 Value Bytecode::get_const(std::size_t address) const {
@@ -95,12 +121,18 @@ void Bytecode::dump_text() {
       case VirtualMachine::LoadLocal:
         std::cout << "loadl %" << (std::size_t) m_code[++i] << "\n";
         break;
-      case VirtualMachine::Jump:
-        std::cout << "jmp $" << (std::size_t) m_code[++i] << "\n";
+      case VirtualMachine::Jump: {
+        auto addr = get_qword(i + 1);
+        i += 7;
+        std::cout << "jmp $" << addr << "\n";
         break;
-      case VirtualMachine::JumpIfFalse:
-        std::cout << "jmpf $" << (std::size_t) m_code[++i] << "\n";
+      }
+      case VirtualMachine::JumpIfFalse: {
+        auto addr = get_qword(i + 1);
+        i += 7;
+        std::cout << "jmpf $" << addr << "\n";
         break;
+      }
       case VirtualMachine::Constant16:
         std::cout << "push $" << (std::size_t) m_code[++i] << "\n";
         break;
@@ -314,6 +346,15 @@ Value VirtualMachine::execute(const Bytecode* code) {
     return code->get_const(*m_ip++);
   };
 
+  auto read_qword = [&]() {
+    QwordToBytes qtb;
+
+    std::copy(m_ip, m_ip + 8, qtb.bytes);
+    m_ip += 8;
+
+    return qtb.qword;
+  };
+
   while (m_ip != nullptr && !m_halt) {
     std::uint8_t op = *m_ip++;
 
@@ -438,12 +479,12 @@ Value VirtualMachine::execute(const Bytecode* code) {
         break;
       }
       case Jump: {
-        auto offset = *m_ip++;
+        auto offset = read_qword();
         m_ip = code->get_code().data() + offset;
         break;
       }
       case JumpIfFalse: {
-        auto offset = *m_ip++;
+        auto offset = read_qword();
 
         if (!pop().as_bool()) {
           m_ip = code->get_code().data() + offset;
