@@ -49,9 +49,11 @@ private:
   void variable_declaration();
 
   void statement();
-  void print();
+  void variable_assignment();
 
+  void print();
   void if_statement();
+  void while_statement();
 
   void expression();
 

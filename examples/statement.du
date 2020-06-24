@@ -1,10 +1,8 @@
-let x = 102;
+let i = 1;
 
-if x == 100 {
-  print('x is 100');
-} else if x == 200 {
-  print('x is 200');
+while i < 6 {
+  print(i);
+  i = i + 1;
 } else {
-  print('x is neither 100 nor 200');
+  print('i is no longer less than 6');
 }
-

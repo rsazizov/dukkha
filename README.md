@@ -93,13 +93,17 @@ Below is BNF representation of the language (for now, I'll add more rules as I g
 <variable_declaration> := "let" <identifier> ("=" <expression>)? ";";
 
 <statement> := <print_statement> |
+               <variable_assignment> |
                <if_statement> |
                <expression> ";";
+
+<variable_assignment> := <identifier> "=" <expression> ";";
 
 <print_statement> := "print" <expression> ";";
 <if_statement> := "if" <expression> <block_declaration>
                   ("else" "if" <expression> <block_declaration>)*
                   ("else" <block_declaration>)?;
+<while_statement> := "while" <expression> <block_declaration> ("else" <block_declaration>)?;
 
 <expression> := <or>;
 

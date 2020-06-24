@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iostream>
 #include <math.h>
+#include <string>
 
 Compiler::Compiler() {
 }
@@ -113,13 +114,33 @@ void Compiler::statement() {
   if (m_cursor.type == TokenType::Print) {
     advance();
     print();
+  } else if (m_cursor.type == TokenType::Identifer) {
+    advance();
+    variable_assignment();
   } else if (m_cursor.type == TokenType::If) {
     advance();
     if_statement();
+  } else if (m_cursor.type == TokenType::While) {
+    advance();
+    while_statement();
   } else {
     expression();
     consume(TokenType::Semicolon, "';' expected");
   }
+}
+
+void Compiler::variable_assignment() {
+  const std::string& name = m_prev.as_string;
+  std::size_t pname = m_code.push_const(name);
+
+  consume(TokenType::Eq, "'=' expected");
+
+  expression();
+
+  consume(TokenType::Semicolon, "';' expected");
+
+  emit(VirtualMachine::StoreGlobal);
+  emit(pname);
 }
 
 void Compiler::print() {
@@ -172,6 +193,29 @@ void Compiler::if_statement() {
 
   for (auto address : endif_jumps) {
     m_code.set_op(address, m_code.get_code().size());
+  }
+}
+
+void Compiler::while_statement() {
+  std::size_t eval_exp_address = m_code.get_code().size();
+  expression();
+
+  emit(VirtualMachine::JumpIfFalse);
+  std::size_t block_end_addr = emit(0);
+
+  consume(TokenType::LeftCurly, "'{' expected");
+
+  block();
+
+  emit(VirtualMachine::Jump);
+  emit(eval_exp_address);
+
+  m_code.set_op(block_end_addr, m_code.get_code().size());
+
+  if (m_cursor.type == TokenType::Else) {
+    advance();
+    consume(TokenType::LeftCurly, "'{' expected");
+    block();
   }
 }
 
