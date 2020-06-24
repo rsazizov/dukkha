@@ -18,15 +18,14 @@ Dukkha is a toy programming language and a corresponding implementation in C++ (
 ## Virtual Machine
 
 Compiled programs have `.rodata` (`Bytecode::m_consts`) and `.text` (`Bytecode::m_code`)
-sections for constants and instructions respectively. Dukkha programs run on a stack based 16 bit
-(for now) virtual machine. Below you can find the instruction set for the vm. S refers to the stack and pop(S)'s
+sections for constants and instructions respectively. Dukkha programs run on a stack based virtual machine. Below you can find the instruction set for the vm. S refers to the stack and pop(S)'s
 should be read from right to left.  Also, `$A` refers to a value at address A defined in `.rodata` section of a compiled program
 and `%A` referes to a value on a stack with offset A (from the bottom of the stack);
 
 | Instruction | Operands | Description                                                       |
 |-------------|----------|-------------------------------------------------------------------|
 | Return      | None     | Halt                                                              |
-| Constant16  | A        | Load a constant at $A                                             |
+| Constant16  | A16      | Load a constant at $A                                             |
 | Pop         | None     | pop(S)                                                            |
 | Negate      | None     | Calculate -pop(S) and push it on top of the stack                 |
 | Add         | None     | Calculate pop(S) + pop(S) and push it on top of the stack         |
@@ -37,12 +36,12 @@ and `%A` referes to a value on a stack with offset A (from the bottom of the sta
 | Not         | None     | Calculate logical ~pop(S) and push it on top of the stack         |
 | Greater     | None     | Calculate logical pop(S) > pop(S) and push it on top of the stack |
 | Less        | None     | Calculate logical pop(S) < pop(S) and push it on top of the stack |
-| StoreGlobal | A        | Store value pop(S) as a global named $A                           |
-| LoadGlobal  | A        | Load a global value named $A and push it on top of the stack      |
-| StoreLocal  | A        | Store pop(S) at %A                                                |
-| LoadLocal   | A        | Load a value %A and push it on top of the stack                   |
-| JumpIfFalse | A        | Set instruction pointer to A if pop(S) == false                   |
-| Jump        | A        | Set instruction pointer to A                                      |
+| StoreGlobal | A16      | Store value pop(S) as a global named $A                           |
+| LoadGlobal  | A16      | Load a global value named $A and push it on top of the stack      |
+| StoreLocal  | A16      | Store pop(S) at %A                                                |
+| LoadLocal   | A16      | Load a value %A and push it on top of the stack                   |
+| JumpIfFalse | A64      | Set instruction pointer to A if pop(S) == false                   |
+| Jump        | A64      | Set instruction pointer to A                                      |
 
 Here is an example of a program and its compiled bytecode:
 
