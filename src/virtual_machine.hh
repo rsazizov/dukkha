@@ -17,6 +17,10 @@ public:
 
   std::size_t push_op(std::uint8_t op, std::size_t line);
   std::size_t push_const(Value value);
+
+  void set_op(std::size_t address, std::uint8_t op);
+  std::uint8_t& get_op(std::size_t address);
+
   Value get_const(std::size_t address) const;
 
   const std::vector<std::uint8_t>& get_code() const;
@@ -63,7 +67,10 @@ public:
     LoadGlobal,
 
     StoreLocal,
-    LoadLocal
+    LoadLocal,
+
+    Jump,
+    JumpIfFalse,
   };
 
   VirtualMachine();

@@ -12,8 +12,8 @@ int main(int argc, char* argv[]) {
 
   if (!compiled) return EX_SOFTWARE;
 
-  code.dump_data();
-  code.dump_text();
+  /* code.dump_data(); */
+  /* code.dump_text(); */
 
   VirtualMachine vm;
   vm.execute(&code);

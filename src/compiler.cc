@@ -113,6 +113,9 @@ void Compiler::statement() {
   if (m_cursor.type == TokenType::Print) {
     advance();
     print();
+  } else if (m_cursor.type == TokenType::If) {
+    advance();
+    if_statement();
   } else {
     expression();
     consume(TokenType::Semicolon, "';' expected");
@@ -123,6 +126,53 @@ void Compiler::print() {
   expression();
   emit(VirtualMachine::Print);
   consume(TokenType::Semicolon, "';' expected");
+}
+
+void Compiler::if_statement() {
+  expression();
+  consume(TokenType::LeftCurly, "'{' expected");
+
+  std::vector<std::size_t> endif_jumps;
+  std::size_t next_block_target = 0;
+
+  emit(VirtualMachine::JumpIfFalse);
+  next_block_target = emit(0);
+
+  block();
+
+  emit(VirtualMachine::Jump);
+  endif_jumps.push_back(emit(0));
+
+  m_code.set_op(next_block_target, m_code.get_code().size());
+
+  while (m_cursor.type == TokenType::Else) {
+    advance();
+
+    if (m_cursor.type == TokenType::If) {
+      advance();
+
+      expression();
+
+      emit(VirtualMachine::JumpIfFalse);
+      next_block_target = emit(0);
+
+      consume(TokenType::LeftCurly, "'{' expected");
+      block();
+
+      emit(VirtualMachine::Jump);
+      endif_jumps.push_back(emit(0));
+
+      m_code.set_op(next_block_target, m_code.get_code().size());
+    } else {
+      consume(TokenType::LeftCurly, "'{' expected");
+      block();
+      break;
+    }
+  }
+
+  for (auto address : endif_jumps) {
+    m_code.set_op(address, m_code.get_code().size());
+  }
 }
 
 void Compiler::logical_or() {
@@ -349,10 +399,8 @@ void Compiler::consume(TokenType type, const char* msg) {
   }
 }
 
-void Compiler::emit(std::uint8_t byte) {
-  if (!m_had_error) {
-    m_code.push_op(byte, m_prev.line);
-  }
+std::size_t Compiler::emit(std::uint8_t byte) {
+  return m_code.push_op(byte, m_prev.line);
 }
 
 void Compiler::error(const Token& at, const char* msg) {

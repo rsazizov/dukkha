@@ -16,6 +16,8 @@ void Bytecode::clear() {
   m_lines.clear();
 }
 
+// TODO: Sanity checks.
+
 std::size_t Bytecode::push_op(std::uint8_t op, std::size_t line) {
   m_code.push_back(op);
   m_lines.push_back(line);
@@ -26,6 +28,14 @@ std::size_t Bytecode::push_op(std::uint8_t op, std::size_t line) {
 std::size_t Bytecode::push_const(Value value) {
   m_consts.push_back(value);
   return m_consts.size() - 1;
+}
+
+void Bytecode::set_op(std::size_t address, std::uint8_t op) {
+  m_code[address] = op;
+}
+
+std::uint8_t& Bytecode::get_op(std::size_t address) {
+  return m_code[address];
 }
 
 Value Bytecode::get_const(std::size_t address) const {
@@ -85,6 +95,12 @@ void Bytecode::dump_text() {
         break;
       case VirtualMachine::LoadLocal:
         std::cout << "loadl %" << (std::size_t) m_code[++i] << "\n";
+        break;
+      case VirtualMachine::Jump:
+        std::cout << "jmp $" << (std::size_t) m_code[++i] << "\n";
+        break;
+      case VirtualMachine::JumpIfFalse:
+        std::cout << "jmpf $" << (std::size_t) m_code[++i] << "\n";
         break;
       case VirtualMachine::Constant16:
         std::cout << "push $" << (std::size_t) m_code[++i] << "\n";
@@ -420,6 +436,20 @@ Value VirtualMachine::execute(const Bytecode* code) {
       case LoadLocal: {
         auto stack_offset = *m_ip++;
         push(m_stack[stack_offset]);
+        break;
+      }
+      case Jump: {
+        auto offset = *m_ip++;
+        m_ip = code->get_code().data() + offset;
+        break;
+      }
+      case JumpIfFalse: {
+        auto offset = *m_ip++;
+
+        if (!pop().as_bool()) {
+          m_ip = code->get_code().data() + offset;
+        }
+
         break;
       }
       default: error() << "Unexpected op: " << (std::size_t) op << "\n";

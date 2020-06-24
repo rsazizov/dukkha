@@ -51,6 +51,8 @@ private:
   void statement();
   void print();
 
+  void if_statement();
+
   void expression();
 
   void logical_or();
@@ -73,7 +75,7 @@ private:
   void advance();
   void consume(TokenType type, const char* msg);
 
-  void emit(std::uint8_t byte);
+  std::size_t emit(std::uint8_t byte);
 
   Bytecode m_code {};
 

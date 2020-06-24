@@ -6,8 +6,8 @@ Dukkha is a toy programming language and a corresponding implementation in C++ (
 
 - [x] Expressions
 - [x] Global variables
-- [ ] Local variables
-- [ ] if-else
+- [x] Local variables
+- [x] if-else
 - [ ] for, while
 - [ ] Python-ish data model
 - [ ] Symbols
@@ -41,6 +41,8 @@ and `%A` referes to a value on a stack with offset A (from the bottom of the sta
 | LoadGlobal  | A        | Load a global value named $A and push it on top of the stack      |
 | StoreLocal  | A        | Store pop(S) at %A                                                |
 | LoadLocal   | A        | Load a value %A and push it on top of the stack                   |
+| JumpIfFalse | A        | Set instruction pointer to A if pop(S) == false                   |
+| Jump        | A        | Set instruction pointer to A                                      |
 
 Here is an example of a program and its compiled bytecode:
 
@@ -84,13 +86,20 @@ Below is BNF representation of the language (for now, I'll add more rules as I g
 <program> := <declaration>+ EOF;
 
 <declaration> := <variable_declaration> |
-                 "{" <declaration>+ "}" |
+                 <block_declaration> |
                  <statement>;
 
+<block_declaration> := "{" <declaration>+ "}";
 <variable_declaration> := "let" <identifier> ("=" <expression>)? ";";
 
-<statement> := <print> | <expression> ";";
-<print> := "print" <expression> ";";
+<statement> := <print_statement> |
+               <if_statement> |
+               <expression> ";";
+
+<print_statement> := "print" <expression> ";";
+<if_statement> := "if" <expression> <block_declaration>
+                  ("else" "if" <expression> <block_declaration>)*
+                  ("else" <block_declaration>)?;
 
 <expression> := <or>;
 

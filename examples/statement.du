@@ -1,11 +1,10 @@
-{
-  let a = 12;
-  {
-    let a = 5;
-    print(a);
-  }
-  {
-    let a = 10;
-    print(a);
-  }
+let x = 102;
+
+if x == 100 {
+  print('x is 100');
+} else if x == 200 {
+  print('x is 200');
+} else {
+  print('x is neither 100 nor 200');
 }
+
