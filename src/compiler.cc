@@ -70,13 +70,12 @@ void Compiler::variable_declaration() {
   std::size_t pname = 0;
 
   if (global_scope) {
-    pname = m_code.push_const(name);
+    pname = resolve_string(name.as_string());
     emit(VirtualMachine::AllocGlobal);
     emit(pname);
   } else {
     for (const auto& local : m_locals) {
       if (local.depth == m_block_depth && local.name == name.as_string()) {
-        // TODO: error() <<
         error(m_prev, "Redefinition of a local variable");
       }
     }
@@ -131,7 +130,7 @@ void Compiler::statement() {
 
 void Compiler::variable_assignment() {
   const std::string& name = m_prev.as_string;
-  std::size_t pname = m_code.push_const(name);
+  std::size_t pname = resolve_string(name);
 
   consume(TokenType::Eq, "'=' expected");
 
@@ -371,7 +370,7 @@ void Compiler::arbitrary() {
       consume(TokenType::RightRound, "')' expected");
       break;
     case TokenType::StringLiteral: {
-      std::size_t pa = m_code.push_const(m_cursor.as_string);
+      std::size_t pa = resolve_string(m_cursor.as_string);
       emit(VirtualMachine::Constant16);
       emit(pa);
       advance();
@@ -424,9 +423,22 @@ void Compiler::resolve_variable(const std::string& name) {
     }
   }
 
-  std::size_t pname = m_code.push_const(name);
+  std::size_t pname = resolve_string(name);
   emit(VirtualMachine::LoadGlobal);
   emit(pname);
+}
+
+
+std::size_t Compiler::resolve_string(const std::string& name) {
+  auto it = m_strings.find(name);
+
+  if (it == m_strings.end()) {
+    std::size_t address = m_code.push_const(name);
+    m_strings[name] = address;
+    return address;
+  }
+
+  return it->second;
 }
 
 void Compiler::advance() {
@@ -450,6 +462,5 @@ std::size_t Compiler::emit(std::uint8_t byte) {
 void Compiler::error(const Token& at, const char* msg) {
   m_had_error = true;
   std::cout << "Error at: " << at.line << ":"
-            << at.position << " - " << msg
-            << ", got " << at.type << ".\n";
+            << at.position << " - " << msg << "\n";
 }

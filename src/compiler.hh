@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <unordered_map>
 #include <vector>
 
 #include "lexer.hh"
@@ -71,6 +72,7 @@ private:
   void enter_block();
   void leave_block();
   void resolve_variable(const std::string& name);
+  std::size_t resolve_string(const std::string& name);
 
   void error(const Token& at, const char* msg);
 
@@ -88,8 +90,9 @@ private:
 
   std::size_t m_block_depth { 0 };
 
-  std::vector<LocalVar> m_locals;
   // (depth, name) -> stack offset
+  std::vector<LocalVar> m_locals;
+  std::unordered_map<std::string, std::size_t> m_strings;
 
   bool m_had_error { false };
 };

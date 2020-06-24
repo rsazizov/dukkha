@@ -12,7 +12,7 @@ DEPS = $(OBJS:%.o=%.d)
 
 TARGET_NAME = dukkha
 TARGET = $(BIN)/$(TARGET_NAME)
-TARGET_ARGS = examples/tokens.du
+TARGET_ARGS = examples/statement.du
 
 $(TARGET): $(OBJS)
 	$(CXX) $^ $(LDFLAGS) -o $(TARGET)

@@ -1,7 +1,6 @@
 #include "virtual_machine.hh"
 #include "value.hh"
 
-#include <bits/c++config.h>
 #include <cstdlib>
 #include <iomanip>
 #include <cmath>
