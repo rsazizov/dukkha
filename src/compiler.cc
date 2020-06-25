@@ -122,6 +122,9 @@ void Compiler::statement() {
   } else if (m_cursor.type == TokenType::While) {
     advance();
     while_statement();
+  } else if (m_cursor.type == TokenType::Continue || m_cursor.type == TokenType::Break) {
+    advance();
+    loop_control_statement();
   } else {
     expression();
     consume(TokenType::Semicolon, "';' expected");
@@ -196,26 +199,54 @@ void Compiler::if_statement() {
 }
 
 void Compiler::while_statement() {
-  std::size_t eval_exp_address = m_code.get_code().size();
+  m_inside_loop = true;
+
+  // IP if we want to continue.
+  m_loop_continue = m_code.get_code().size();
   expression();
 
   emit_byte(VirtualMachine::JumpIfFalse);
-  std::size_t block_end_addr = emit_qword(0);
+  std::size_t loop_else_target = emit_qword(0);
 
   consume(TokenType::LeftCurly, "'{' expected");
 
   block();
 
   emit_byte(VirtualMachine::Jump);
-  emit_qword(eval_exp_address);
+  emit_qword(m_loop_continue);
 
-  m_code.set_qword(block_end_addr, m_code.get_code().size());
+  m_code.set_qword(loop_else_target, m_code.get_code().size());
+
+  m_inside_loop = false;
 
   if (m_cursor.type == TokenType::Else) {
     advance();
     consume(TokenType::LeftCurly, "'{' expected");
     block();
   }
+
+  for (auto addr : m_break_jumps) {
+    m_code.set_qword(addr, m_code.get_code().size());
+  }
+
+  m_break_jumps.clear();
+}
+
+void Compiler::loop_control_statement() {
+  if (!m_inside_loop) {
+    error(m_prev, "Control statement outside loop");
+    return;
+  }
+
+  if (m_prev.type == TokenType::Break) {
+    emit_byte(VirtualMachine::Jump);
+    m_break_jumps.push_back(emit_qword(0));
+  } else if (m_prev.type == TokenType::Continue) {
+    emit_byte(VirtualMachine::Jump);
+    emit_qword(m_loop_continue);
+  }
+
+  consume(TokenType::Semicolon, "';' expected");
 }
 
 void Compiler::logical_or() {

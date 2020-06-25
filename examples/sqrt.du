@@ -1,0 +1,13 @@
+let n = 69;
+let i = 1;
+
+while i <= n / 2 {
+  if i * i == n {
+    print(i);
+    break;
+  }
+
+  i = i + 1;
+} else {
+  print('Square root is not an integer');
+}

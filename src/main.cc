@@ -7,7 +7,7 @@
 int main(int argc, char* argv[]) {
   if (argc != 2) {
     std::cerr << "Usage: dukkha <file.du>\n";
-    return EX_NOINPUT;
+    return EX_USAGE;
   }
 
   Bytecode code;
@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 
   if (!compiled) return EX_SOFTWARE;
 
-  code.dump_data();
+  /* code.dump_data(); */
   /* code.dump_text(); */
 
   VirtualMachine vm;

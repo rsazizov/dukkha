@@ -95,6 +95,7 @@ Below is BNF representation of the language (for now, I'll add more rules as I g
                <variable_assignment> |
                <if_statement> |
                <while_statement> |
+               <loop_control_statement> |
                <expression> ";";
 
 <variable_assignment> := <identifier> "=" <expression> ";";
@@ -104,6 +105,7 @@ Below is BNF representation of the language (for now, I'll add more rules as I g
                   ("else" "if" <expression> <block_declaration>)*
                   ("else" <block_declaration>)?;
 <while_statement> := "while" <expression> <block_declaration> ("else" <block_declaration>)?;
+<loop_control_statement> := ("continue" | "break") ";";
 
 <expression> := <or>;
 

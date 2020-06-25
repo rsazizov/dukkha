@@ -55,6 +55,7 @@ private:
   void print();
   void if_statement();
   void while_statement();
+  void loop_control_statement();
 
   void expression();
 
@@ -90,6 +91,10 @@ private:
   Lexer m_lexer;
 
   std::size_t m_block_depth { 0 };
+  bool m_inside_loop { false };
+
+  std::vector<std::size_t> m_break_jumps;
+  std::size_t m_loop_continue {0 };
 
   // (depth, name) -> stack offset
   std::vector<LocalVar> m_locals;

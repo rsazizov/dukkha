@@ -59,6 +59,8 @@ std::ostream& operator <<(std::ostream& os, TokenType type) {
     TT_CASE(os, True)
     TT_CASE(os, False)
     TT_CASE(os, Print)
+    TT_CASE(os, Continue)
+    TT_CASE(os, Break)
     TT_CASE(os, NumberLiteral)
     TT_CASE(os, StringLiteral)
     TT_CASE(os, Null)
@@ -171,6 +173,8 @@ Token Lexer::next() {
 Token Lexer::keyword_or_identifer() {
   switch (*m_cursor) {
     case 'a': return keyword(1, 2, "nd", TokenType::And);
+    case 'b': return keyword(1, 4, "reak", TokenType::Break);
+    case 'c': return keyword(1, 7, "ontinue", TokenType::Continue);
     case 'o': return keyword(1, 1, "r", TokenType::Or);
     case 't': return keyword(1, 3, "rue", TokenType::True);
     case 'f':

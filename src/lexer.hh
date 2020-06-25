@@ -14,6 +14,7 @@ enum class TokenType {
 
   // Keywords
   Function, Return, Let, For, While, If, Else, And, Or, Not, True, False, Print,
+  Continue, Break,
 
   // Literals
   NumberLiteral, StringLiteral, Null,

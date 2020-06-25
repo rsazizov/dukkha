@@ -123,13 +123,13 @@ void Bytecode::dump_text() {
         break;
       case VirtualMachine::Jump: {
         auto addr = get_qword(i + 1);
-        i += 7;
+        i += 8;
         std::cout << "jmp $" << addr << "\n";
         break;
       }
       case VirtualMachine::JumpIfFalse: {
         auto addr = get_qword(i + 1);
-        i += 7;
+        i += 8;
         std::cout << "jmpf $" << addr << "\n";
         break;
       }
